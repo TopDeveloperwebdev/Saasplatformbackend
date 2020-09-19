@@ -98,10 +98,13 @@ class InstancesController extends Controller
 
         $instanceModel['id'] = $data['id'];
         $instanceModel['instanceName'] = null;
+        $instanceModel['instanceLogo'] = $data['instanceLogo'];
         if ($request->get('instanceName')) $instanceModel['instanceName'] = $data['instanceName'];
+        return $instanceModel;
         Instance::whereId($instanceModel['id'])->update($instanceModel);
         $temp = $data;
         unset($data['instanceName']);
+        unset($data['instanceLogo']);
         AppUser::whereId($data['id'])->update($data);
 
         return $temp;

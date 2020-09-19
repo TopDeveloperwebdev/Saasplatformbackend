@@ -27,13 +27,14 @@ class OrdersController extends Controller
 
         if ($instance_id == 0) {
             $patients = DB::select("SELECT * from `patients` order by id DESC ");
-            $orders = DB::select("SELECT * FROM orders LEFT JOIN app_user ON orders.user_id LIKE app_user.id");
+            $orders = DB::select("SELECT * FROM orders LEFT JOIN app_user ON orders.user_id LIKE app_user.id order by orders.created_at DESC");
         } else {
             //  $res = Patient::where('instance_id', $data['instance_id'])->orderBy('id', 'DESC')->paginate($data['pagination']);
             $patients = DB::select("SELECT * from `patients` where instance_id like $instance_id  order by id DESC ");
-            $orders = DB::select("SELECT * FROM orders LEFT JOIN app_user ON orders.user_id LIKE app_user.id WHERE app_user.instance_id LIKE $instance_id");
+            
+            $orders = DB::select("SELECT * FROM orders LEFT JOIN app_user ON orders.user_id LIKE app_user.id WHERE app_user.instance_id LIKE $instance_id order by orders.created_at DESC");
         }
-
+        
         $ret = array(
             "patients" => $patients,
             "medications" => $medications,
@@ -86,12 +87,25 @@ class OrdersController extends Controller
     function generateRandomString($length)
     {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        $charactersLength = strlen($characters);
-        $randomString = '';
-        for ($i = 0; $i < $length; $i++) {
-            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        $letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        $numbers = "0123456789";
+
+        $lettersLength = strlen($letters);
+        $numbersLength = strlen($numbers);
+        $randomString1 = '';
+        for ($i = 0; $i < 3; $i++) {
+            $randomString1 .= $letters[rand(0, $lettersLength - 1)];
         }
-        return $randomString;
+        $randomString2 = '';
+        for ($i = 0; $i < 3; $i++) {
+            $randomString2 .= $letters[rand(0, $lettersLength - 1)];
+        }
+        $randomNumber = '';
+        for ($i = 0; $i < 3; $i++) {
+            $randomNumber .= $numbers[rand(0, $numbersLength - 1)];
+        }
+
+        return $randomString1.'-'.$randomNumber.'-'.$randomString2;
     }
 
     /**

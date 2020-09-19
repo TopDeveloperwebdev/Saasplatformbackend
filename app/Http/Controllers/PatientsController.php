@@ -25,14 +25,15 @@ class PatientsController extends Controller
         $family_doctors = DB::select("SELECT doctorName from `family_doctors` order by doctorName ASC ");
         $insurances = DB::select("SELECT insurances from `insurances` order by insurances ASC ");
         $pharmacies = DB::select("SELECT pharmacyName from `pharmacies` order by pharmacyName ASC ");
-
+          
         if ($instance_id == 0) {
             $patients = DB::select("SELECT * from `patients` order by id DESC ");
              $users = DB::select("SELECT * from `app_user` order by id DESC ");
         } else {
             //  $res = Patient::where('instance_id', $data['instance_id'])->orderBy('id', 'DESC')->paginate($data['pagination']);
-            $patients = DB::select("SELECT * from `patients` where instance_id like $instance_id  order by id DESC ");
-            $users = DB::select("SELECT * from `app_user` instance_id like $instance_id  order by id DESC ");
+           
+            $patients = DB::select("SELECT * from `patients` where instance_id like $instance_id  order by id DESC ");          
+            $users = DB::select("SELECT * from `app_user` where instance_id like $instance_id  order by id DESC ");         
         }
         $ret = array(
             "patients" => $patients,

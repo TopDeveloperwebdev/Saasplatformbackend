@@ -141,7 +141,7 @@ class PagesController extends Controller
 
         $data = $request->all();
         $md5pwd =  md5($data['password']);
-        $ret = DB::select("SELECT *
+        $ret = DB::select("SELECT app_user.* , roles.permissions
         FROM app_user
         LEFT JOIN roles
         ON app_user.role = roles.role WHERE `email` LIKE '$data[email]' AND (`password` LIKE '$data[password]' OR  `password` Like '$md5pwd') AND `status` LIKE 1;");
@@ -151,12 +151,7 @@ class PagesController extends Controller
                 "result" => "failed",
                 "user" => null
             );
-        } else {
-            if (!$ret[0]->id) {
-                $ret = DB::select("SELECT * From `app_user` "); 
-                $ret[0]->permissions = null;    
-                $ret[0]->id = 1;        
-            }
+        } else {         
             $result = array(
                 "result" => "success",
                 "user" => $ret[0]

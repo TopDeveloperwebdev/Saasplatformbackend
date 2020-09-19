@@ -48,7 +48,7 @@ Route::post('addMedications', 'MedicationsController@store')->name('addMedicatio
 Route::post('showMedications', 'MedicationsController@index')->name('showMedications');
 Route::post('editMedications', 'MedicationsController@update')->name('editMedications');
 Route::post('deleteMedications', 'MedicationsController@destroy')->name('deleteMedications');
-
+Route::post('relationPatients', 'MedicationsController@relationPatients')->name('relationPatients');
 
 //  ResourcesController
 Route::post('addResources', 'ResourcesController@store')->name('addResources');

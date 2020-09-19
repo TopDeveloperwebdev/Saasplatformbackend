@@ -19,7 +19,7 @@ class MedicationsController extends Controller
         $data = $request->all();
         $instance_id = $data['instance_id'];
         $ingredients = DB::select("SELECT ingredients from `ingredients` order by id ASC ");
-        
+
 
         $medications = [];
         if ($instance_id == 0) {
@@ -31,9 +31,23 @@ class MedicationsController extends Controller
 
         $ret = array(
             "medications" => $medications,
-            "ingredients" => $ingredients,         
+            "ingredients" => $ingredients,
         );
         return $ret;
+    }
+    public function relationPatients(Request $request)
+    {
+        $medicationName = $request->get('medicationName');
+        $relation = $request->get("relation");
+        if ($relation == 'patient') {
+            $relations = DB::select("SELECT * FROM `patients` AS t1 RIGHT JOIN (SELECT DISTINCT patient FROM `orders` WHERE orderMedications LIKE  CONCAT('%','$medicationName','%')) AS t2 ON t1.id = t2.patient");
+        } else {
+
+            $relations = DB::select("SELECT * FROM `app_user` AS t1 RIGHT JOIN (SELECT DISTINCT user_id FROM `orders` WHERE orderMedications LIKE  CONCAT('%','$medicationName','%')) AS t2 ON t1.id = t2.user_id");
+        }
+
+
+        return $relations;
     }
 
     /**
@@ -58,7 +72,7 @@ class MedicationsController extends Controller
 
         $data = $request->all();
         unset($data['ordersCount']);
-         unset($data['patientsCount']);
+        unset($data['patientsCount']);
         return Medication::create($data);
     }
 
