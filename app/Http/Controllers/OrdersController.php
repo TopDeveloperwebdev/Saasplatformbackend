@@ -53,13 +53,13 @@ class OrdersController extends Controller
             $patient = DB::select("SELECT * from `patients` where id like '$order->patient'");
             $doctor = DB::select("SELECT * from `family_doctors` where doctorName like '$order->doctor'");
             $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$order->pharmacy'");
-            $user = DB::select("SELECT name , id from `app_user` where id like '$order->user_id'");
+            $user = DB::select("SELECT name , id , userAvatar from `app_user` where id like '$order->user_id'");
 
             $patientId = $patient[0]->id;
 
             $lastOrderTemp = DB::select("SELECT * FROM orders WHERE patient LIKE $patientId ORDER BY created_at DESC  LIMIT 1");
             $lastOrder = $lastOrderTemp[0];
-            $lastUser = DB::select("SELECT name from `app_user` where id like '$lastOrder->user_id'");
+            $lastUser = DB::select("SELECT name ,id, userAvatar from `app_user` where id like '$lastOrder->user_id'");
             $instance = DB::select("SELECT * from `instances` where id like '$order->instance_id'");
             $orderMedications = json_decode($order->orderMedications);
             $Medications = DB::table('medications')->whereIn('medicationName', $orderMedications)->get();

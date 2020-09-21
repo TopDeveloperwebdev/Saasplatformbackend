@@ -63,6 +63,15 @@ class InstancesController extends Controller
             $data->instanceLogo = url('/') . '/file_storage/' . $filename;
         }
 
+        if ($request->hasFile('userAvatar')) {
+            $userAvatar = $request->file('userAvatar');
+            $destinationPath = 'file_storage/';
+            $originalFile = $userAvatar->getClientOriginalName();
+            $filename = strtotime(date('Y-m-d h:i:s')) . $originalFile;
+            $userAvatar->move($destinationPath, $filename);
+            $data->userAvatar = url('/') . '/file_storage/' . $filename;
+        }
+
         $instanceData = json_decode(json_encode($data), true);
         $instance =  Instance::create($instanceData);
         $instanceData['instance_id'] = $instance->id;
@@ -93,18 +102,26 @@ class InstancesController extends Controller
 
             $instanceData->instanceLogo = url('/') . '/file_storage/' . $filename;
         }
+        if ($request->hasFile('userAvatar')) {
+            $userAvatar = $request->file('userAvatar');
+            $destinationPath = 'file_storage/';
+            $originalFile = $userAvatar->getClientOriginalName();
+            $filename = strtotime(date('Y-m-d h:i:s')) . $originalFile;
+            $userAvatar->move($destinationPath, $filename);
 
+            $instanceData->userAvatar = url('/') . '/file_storage/' . $filename;
+        }
         $data = json_decode(json_encode($instanceData), true);
 
-        $instanceModel['id'] = $data['id'];
-        $instanceModel['instanceName'] = null;
-        $instanceModel['instanceLogo'] = $data['instanceLogo'];
-        if ($request->get('instanceName')) $instanceModel['instanceName'] = $data['instanceName'];
-        return $instanceModel;
+        $instanceModel['id'] = $data['id'];    
+        $instanceModel['instanceLogo'] = $data['instanceLogo'];      
+        $instanceModel['instanceName'] = $data['instanceName'];
+
         Instance::whereId($instanceModel['id'])->update($instanceModel);
         $temp = $data;
         unset($data['instanceName']);
         unset($data['instanceLogo']);
+       
         AppUser::whereId($data['id'])->update($data);
 
         return $temp;

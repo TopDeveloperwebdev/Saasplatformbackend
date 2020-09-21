@@ -16,7 +16,7 @@ class Orders extends Migration
         //
         Schema::create('orders', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('orderMedications')->nullable();
+            $table->longText('orderMedications')->nullable();
             $table->string('orderId')->nullable();
             $table->string('patient')->nullable();
             $table->string('pharmacy')->nullable(); 

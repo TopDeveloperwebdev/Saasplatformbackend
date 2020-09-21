@@ -17,7 +17,7 @@ class Instances extends Migration
         //
         Schema::create('instances', function (Blueprint $table) {
             $table->increments('id');
-             $table->string('instanceLogo')->nullable();   
+            $table->string('instanceLogo')->nullable();
             $table->string('instanceName')->nullable();         
             $table->timestamps();
         });

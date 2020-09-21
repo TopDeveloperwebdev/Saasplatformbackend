@@ -54,9 +54,21 @@ class PagesController extends Controller
     public function store(Request $request)
     {
 
-        $data = $request->all();
+      
+        $data = json_decode($request->get('data'));
+        //file save
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $destinationPath = 'file_storage/';
+            $originalFile = $file->getClientOriginalName();
+            $filename = strtotime(date('Y-m-d h:i:s')) . $originalFile;
+            $file->move($destinationPath, $filename);
+            $data->userAvatar = url('/') . '/file_storage/' . $filename;
+        }
 
-        return  AppUser::create($data);
+        $Array = json_decode(json_encode($data), true);
+        return AppUser::create($Array);
+        
     }
 
 
@@ -68,10 +80,25 @@ class PagesController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request)
-    {
-        $data = $request->all();
+    { 
 
-        return  AppUser::whereId($data['id'])->update($data);
+        $data = json_decode($request->get('data'));
+        //file save
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $destinationPath = 'file_storage/';
+            $originalFile = $file->getClientOriginalName();
+            $filename = strtotime(date('Y-m-d h:i:s')) . $originalFile;
+            $file->move($destinationPath, $filename);
+
+            $data->userAvatar = url('/') . '/file_storage/' . $filename;
+        }
+
+        $Array = json_decode(json_encode($data), true);
+
+         AppUser::whereId($Array['id'])->update($Array);
+        return $Array;
     }
 
     /**
@@ -103,12 +130,11 @@ class PagesController extends Controller
             } else {
                 $flights = AppUser::where('email', $data['email'])->get();
                 if (count($flights) == 0) {
-                    $category = new AppUser($data);
-                    $category->save();
+                                  
+                    $user = AppUser::create($data);                 
                     $ret = array(
                         "result" => "success",
-                        "name" => $data['name'],
-                        "instance_id" => $data['instance_id']
+                        "user" => $user,                      
                     );
                 } else {
                     $ret = array(
@@ -119,13 +145,11 @@ class PagesController extends Controller
         } else {
             $flights = AppUser::where('email', $data['email'])->get();
             if (count($flights) == 0) {
-                $category = new AppUser($data);
-                $category->save();
+                $user = AppUser::create($data);                 
                 $ret = array(
                     "result" => "success",
-                    "name" => $data['name'],
-                    "instance_id" => $data['instance_id']
-                );
+                    "user" => $user,                      
+                );               
             } else {
                 $ret = array(
                     "result" => "exist"

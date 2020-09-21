@@ -15,6 +15,7 @@ class AppUser extends Migration
     {
         Schema::create('app_user', function (Blueprint $table) {
             $table->increments('id');
+            $table->string('userAvatar')->nullable();
             $table->string('name')->nullable();
             $table->string('email')->unique();
             $table->string('password')->nullable();

@@ -27,18 +27,19 @@ class Patients extends Migration
             $table->string('phone2')->nullable();
             $table->string('email')->nullable();
             $table->string('picture')->nullable();
-            $table->string('resources')->nullable();
+            $table->longText('resources')->nullable();
             $table->string('insurance')->nullable();
-            $table->string('services')->nullable();
+            $table->string('insuranceNr')->nullable();
+            $table->longText('services')->nullable();
             $table->string('familyDoctor')->nullable();
             $table->integer('keyNumber')->nullable();
             $table->integer('floor')->nullable();
             $table->string('degreeCare')->nullable();
             $table->string('pharmacy')->nullable();
-            $table->string('userGroup')->nullable();
+            $table->longText('userGroup')->nullable();
             $table->string('status')->default(0);
             $table->integer('instance_id')->default(0);
-             $table->boolean('serviceplan')->default(0);
+            $table->boolean('serviceplan')->default(0);
             $table->timestamps();
         });
     }

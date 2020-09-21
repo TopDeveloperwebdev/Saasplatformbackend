@@ -110,6 +110,13 @@ Route::post('editUsers', 'PagesController@update')->name('editUsers');
 Route::post('deleteUsers', 'PagesController@destroy')->name('deleteUsers');
 
 
+//  FilesController
+Route::post('addDocuments', 'FilesController@store')->name('addDocuments');
+Route::post('showDocuments', 'FilesController@index')->name('showDocuments');
+Route::post('editDocuments', 'FilesController@update')->name('editDocuments');
+Route::post('deleteDocuments', 'FilesController@destroy')->name('deleteDocuments');
+Route::post('getByIdDocument', 'FilesController@getDocument')->name('getDocument');
+
 // Route::get('categories/all', 'PagesController@apiShowCategories');
 // Route::get('categories/premium', 'PagesController@apiShowCategoriesPremium');
 // Route::get('categories/free', 'PagesController@apiShowCategoriesFree');
