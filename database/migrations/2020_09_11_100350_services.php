@@ -16,7 +16,7 @@ class Services extends Migration
         //
         Schema::create('services', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('services');         
+            $table->string('services')->unique();         
             $table->timestamps();
         });
     }

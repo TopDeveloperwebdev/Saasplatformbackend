@@ -115,7 +115,12 @@ Route::post('addDocuments', 'FilesController@store')->name('addDocuments');
 Route::post('showDocuments', 'FilesController@index')->name('showDocuments');
 Route::post('editDocuments', 'FilesController@update')->name('editDocuments');
 Route::post('deleteDocuments', 'FilesController@destroy')->name('deleteDocuments');
-Route::post('getByIdDocument', 'FilesController@getDocument')->name('getDocument');
+Route::post('getDocuments', 'FilesController@getDocument')->name('getDocument');
+
+Route::post('addFolders', 'FilesController@storeFolder')->name('addFolders');
+Route::post('editFolders', 'FilesController@updateFolder')->name('editFolders');
+Route::post('showFolders', 'FilesController@indexFolder')->name('showFolders');
+Route::post('deleteFolders', 'FilesController@destroyFolder')->name('deleteFolders');
 
 // Route::get('categories/all', 'PagesController@apiShowCategories');
 // Route::get('categories/premium', 'PagesController@apiShowCategoriesPremium');

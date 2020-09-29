@@ -14,11 +14,13 @@ class Documents extends Migration
     public function up()
     {
         //  
-          Schema::create('documents', function (Blueprint $table) {
+        Schema::create('documents', function (Blueprint $table) {
             $table->increments('id');
             $table->string('title')->nullable();
             $table->longText('content')->nullable();
-            $table->string('instance_id')->nullable();         
+            $table->string('instance_id')->nullable();
+            $table->integer('contentHeight')->nullable();
+            $table->integer('contentWidth')->nullable();
             $table->timestamps();
         });
     }

@@ -35,6 +35,9 @@ class PatientsController extends Controller
             $patients = DB::select("SELECT * from `patients` where instance_id like $instance_id  order by id DESC ");          
             $users = DB::select("SELECT * from `app_user` where instance_id like $instance_id  order by id DESC ");         
         }
+        $documents = DB::select("SELECT t1.* ,t2.instanceName , t2.instanceLogo, t2.name , t2.email  FROM documents AS t1 LEFT JOIN (SELECT  instances.* , app_user.name , app_user.email  FROM instances  LEFT JOIN app_user ON instances.id LIKE app_user.instance_id WHERE app_user.isOwner LIKE 1) AS t2 ON t1.instance_id = t2.id");
+       
+        $folders = DB::select("SELECT * from `carefolders` where instance_id like $instance_id order by id DESC");
         $ret = array(
             "patients" => $patients,
             "services" => $services,
@@ -42,7 +45,9 @@ class PatientsController extends Controller
             "family_doctors" => $family_doctors,
             "insurances" => $insurances,
             "pharmacies" => $pharmacies ,
-            "users" => $users
+            "users" => $users,
+            "documents" =>$documents,
+            "folders" => $folders
         );
         return $ret;
     }
