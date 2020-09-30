@@ -9,7 +9,7 @@ use Carbon\Carbon;
 use App\Jobs\SendMailJob;
 use App\User;
 use App\Mail\NewArrivals;
-
+use Illuminate\Support\Facades\DB;
 class NotifyUsers extends Command
 {
     /**
@@ -54,7 +54,9 @@ class NotifyUsers extends Command
             $messages->where('date_string',  $now)->each(function($message) {
                 if($message->delivered == 'NO')
                 {
-                    $users = User::all();
+                  //  $users = User::all();
+                    $orderUsers = $message->receivers;
+                    $users = DB::table('app_user')->whereIn('id', $orderUsers)->get();
                     foreach($users as $user) {
                         dispatch(new SendMailJob(
                             $user->email, 

@@ -122,9 +122,9 @@ Route::post('editFolders', 'FilesController@updateFolder')->name('editFolders');
 Route::post('showFolders', 'FilesController@indexFolder')->name('showFolders');
 Route::post('deleteFolders', 'FilesController@destroyFolder')->name('deleteFolders');
 
-Route::get('get_users', 'MessagesController@getUsers');
-Route::get('get_messages', 'MessagesController@getMessages');
-Route::post('notifications', 'MessagesController@sendMail');
+// Route::get('get_users', 'MessagesController@getUsers');
+// Route::get('get_messages', 'MessagesController@getMessages');
+ Route::post('notifications', 'MessagesController@sendMail');
 // Route::get('categories/all', 'PagesController@apiShowCategories');
 // Route::get('categories/premium', 'PagesController@apiShowCategoriesPremium');
 // Route::get('categories/free', 'PagesController@apiShowCategoriesFree');

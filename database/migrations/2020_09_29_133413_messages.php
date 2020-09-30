@@ -21,6 +21,7 @@ class Messages extends Migration
             $table->enum('delivered', ['YES', 'NO'])->default('NO');
             $table->string('date_string')->nullable();
             $table->timestamp('send_date');
+            $table->longText('receivers');
             $table->timestamps();
         });
     }
