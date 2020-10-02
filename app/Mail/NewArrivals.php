@@ -18,7 +18,6 @@ class NewArrivals extends Mailable
     {
         $this->user = $user;
         $this->new_arrival = $new_arrival;
-        
     }
 
     /**
@@ -28,18 +27,12 @@ class NewArrivals extends Mailable
      */
     public function build()
     {
-
-        return $this->markdown('sendmail')
-                    ->subject($this->new_arrival->title)
-                    ->from('scnpinside@gmail.com', 'Wonderful Company')
-                    ->with([
-                        'new_arrival' => $this->new_arrival,
-                    ]);
-        
-        // return $this->from(env('MAIL_FROM', 'example@gmail.com'))
-        //     ->replyTo(env('MAIL_FROM', 'example@gmail.com'))
-        //     ->subject($this->new_arrival->title)
-        //     ->html($this->new_arrival->body);
-          
+        return $this->from(env('MAIL_FROM', 'example@gmail.com'))
+            ->replyTo(env('MAIL_FROM', 'example@gmail.com'))
+            ->subject($this->new_arrival->title)
+            ->view('sendmail')
+            ->with([
+                'new_arrival' => $this->new_arrival->body,
+            ]);
     }
 }
