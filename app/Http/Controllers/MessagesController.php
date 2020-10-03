@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Message;
+use App\emailtemplate;
 use App\Jobs\SendMailJob;
 use Carbon\Carbon;
 use App\User;
 use App\Mail\NewArrivals;
 use Illuminate\Support\Facades\DB;
+
 class MessagesController extends Controller
 {
     public function getUsers()
@@ -42,7 +44,7 @@ class MessagesController extends Controller
 
             $orderUsers = $request->get('receivers');
             $users = DB::table('app_user')->whereIn('id', $orderUsers)->get();
-           
+
             //   $users = User::all();
 
             foreach ($users as $user) {
@@ -58,5 +60,52 @@ class MessagesController extends Controller
 
             return response()->json('Notification will be sent later.', 201);
         }
+    }
+
+    public function index(Request $request)
+    { 
+        return emailtemplate::all();
+    }
+
+
+    /**
+     * Store a newly created Document in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+
+        $data = $request->all();
+
+        return emailtemplate::create($data);
+    }
+
+
+    /**
+     * Update the specified Document in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request)
+    {
+        $data = $request->all();
+
+        return  emailtemplate::whereId($request->get('id'))->update($data);
+    }
+
+    /**
+     * Remove the specified Document from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Request $request)
+    {
+        $res = emailtemplate::where('id', $request->get('id'))->delete();
+        return $res;
     }
 }
