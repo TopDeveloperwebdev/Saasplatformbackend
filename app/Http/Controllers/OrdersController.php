@@ -5,7 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Order;
 use App\Comment;
+use App\Trigger;
 use Auth;
+use App\emailtemplate;
+use App\Jobs\SendMailJob;
+use Carbon\Carbon;
+use App\Mail\NewArrivals;
+use App\Message;
 use Illuminate\Support\Facades\DB;
 
 class OrdersController extends Controller
@@ -27,14 +33,14 @@ class OrdersController extends Controller
 
         if ($instance_id == 0) {
             $patients = DB::select("SELECT * from `patients` order by id DESC ");
-            $orders = DB::select("SELECT * FROM orders LEFT JOIN app_user ON orders.user_id LIKE app_user.id order by orders.created_at DESC");
+            $orders = DB::select("SELECT orders.* FROM orders LEFT JOIN app_user ON orders.user_id LIKE app_user.id order by orders.created_at DESC");
         } else {
             //  $res = Patient::where('instance_id', $data['instance_id'])->orderBy('id', 'DESC')->paginate($data['pagination']);
             $patients = DB::select("SELECT * from `patients` where instance_id like $instance_id  order by id DESC ");
-            
-            $orders = DB::select("SELECT * FROM orders LEFT JOIN app_user ON orders.user_id LIKE app_user.id WHERE app_user.instance_id LIKE $instance_id order by orders.created_at DESC");
+
+            $orders = DB::select("SELECT orders.* FROM orders LEFT JOIN app_user ON orders.user_id LIKE app_user.id WHERE app_user.instance_id LIKE $instance_id order by orders.created_at DESC");
         }
-        
+
         $ret = array(
             "patients" => $patients,
             "medications" => $medications,
@@ -74,7 +80,7 @@ class OrdersController extends Controller
                 "order" => $order,
                 "lastUser" => $lastUser,
                 "lastOrder" => $lastOrder,
-                "instance" => $instance ,
+                "instance" => $instance,
                 "commentList" => $commentList
             );
         }
@@ -105,7 +111,7 @@ class OrdersController extends Controller
             $randomNumber .= $numbers[rand(0, $numbersLength - 1)];
         }
 
-        return $randomString1.'-'.$randomNumber.'-'.$randomString2;
+        return $randomString1 . '-' . $randomNumber . '-' . $randomString2;
     }
 
     /**
@@ -118,17 +124,71 @@ class OrdersController extends Controller
     {
 
         $data = $request->all();
+        $TriggerType = 'User create an Order';
         $data['orderId'] = $this->generateRandomString(10);
+        $instance_id = $request->get('instance_id');
+
+        $emailTriggerTemp = DB::select("SELECT * FROM `triggers` AS t1 LEFT JOIN emailtemplates AS t2 ON t1.template LIKE t2.title WHERE t1.instance_id LIKE '$instance_id' AND t1.TYPE LIKE '$TriggerType'");
+        if (count($emailTriggerTemp)) {
+            $users = [];
+            $emailTrigger = $emailTriggerTemp[0];
+            $usergroup = json_decode($emailTrigger->usergroup);
+            $patientId = $request->get('patient');
+
+            $patient = DB::select("SELECT * from `patients` where id like '$patientId'");
+            if (in_array("Patients", $usergroup)) {
+                array_push($users, $patient[0]->email);
+            }
+            if (in_array("Pharmacies", $usergroup)) {
+                $pharmacyname = $request->get('pharmacy');
+                $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$pharmacyname'");
+                array_push($users, $pharmacy[0]->email);
+            }
+            if (in_array("Family doctors", $usergroup)) {
+                $doctorName = $request->get('doctor');
+                $family_doctors = DB::select("SELECT * from `family_doctors` where doctorName like '$doctorName'");
+
+                array_push($users, $family_doctors[0]->email);
+            }
+            $content = $emailTrigger->body;
+            if (count($patient)) {
+                $placeholders = $patient[0];
+                $content =  str_replace("[patient firstname]", $placeholders->firstName, $content);
+                $content =  str_replace("[patient lastname]", $placeholders->lastName, $content);
+                $content =  str_replace("[patient birthday]", $placeholders->birthday, $content);
+                $content =  str_replace("[patient insurance]", $placeholders->insurance, $content);
+                $content =  str_replace("[patient address]", $placeholders->streetNr, $content);
+                $content =  str_replace("[patient phone]", $placeholders->phone1, $content);
+            }
+
+            $this->sendMail($emailTrigger->title,$content, $users);
+        }
+
         return Order::create($data);
     }
+    public function sendMail($title, $body, $users)
+    {
+        $message = new Message();
+        $message->title = $title;
+        $message->body = $body;
+        $message->receivers  = json_encode($users);
+        $message->delivered = 'YES';
+        $message->send_date = Carbon::now();
+        $message->save();
 
+        foreach ($users as $user) {
+            dispatch(new SendMailJob($user, new NewArrivals($title, $body)));
+        }
+
+        return response()->json('Mail sent.', 201);
+    }
     public function submit(Request $request)
     {
-      
-        $data = $request->all();   
+
+        $data = $request->all();
         return Comment::create($data);
     }
-    
+
     /**
      * Update the specified Order in storage.
      *

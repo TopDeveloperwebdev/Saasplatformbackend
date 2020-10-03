@@ -11,13 +11,16 @@ class NewArrivals extends Mailable
 {
     use Queueable, SerializesModels;
 
-    protected $new_arrival;
-    protected $user;
+    protected $title;
+    protected $body;
+   
 
-    public function __construct($user, $new_arrival)
+
+    public function __construct($title, $body)
     {
-        $this->user = $user;
-        $this->new_arrival = $new_arrival;
+        $this->title = $title;
+        $this->body = $body;
+     
     }
 
     /**
@@ -29,10 +32,10 @@ class NewArrivals extends Mailable
     {
         return $this->from(env('MAIL_FROM', 'example@gmail.com'))
             ->replyTo(env('MAIL_FROM', 'example@gmail.com'))
-            ->subject($this->new_arrival->title)
+            ->subject($this->title)
             ->view('sendmail')
             ->with([
-                'new_arrival' => $this->new_arrival->body,
+                'emailTemplate' => $this->body                
             ]);
     }
 }

@@ -18,6 +18,7 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Credentials: true");
 header('Access-Control-Allow-Headers: X-Requested-With, content-type, access-control-allow-origin, access-control-allow-methods, access-control-allow-headers');
 
+
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -127,6 +128,10 @@ Route::post('editMails', 'MessagesController@update')->name('editMails');
 Route::post('showMails', 'MessagesController@index')->name('showMails');
 Route::post('deleteMails', 'MessagesController@destroy')->name('deleteMails');
 Route::post('notifications', 'MessagesController@sendMail');
+
+Route::post('showTriggers', 'MessagesController@indexTrigger')->name('showTriggers');
+Route::post('addTriggers', 'MessagesController@storeTrigger')->name('addTriggers');
+Route::post('editTriggers', 'MessagesController@updateTrigger')->name('editTriggers');
 // Route::get('get_users', 'MessagesController@getUsers');
 // Route::get('get_messages', 'MessagesController@getMessages');
 

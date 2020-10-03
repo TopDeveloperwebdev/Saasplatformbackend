@@ -14,4 +14,6 @@
 Route::get('/', function () {
     return view('welcome');
 });
-
+// Route::get('sendmail', function () {
+//     return view('sendmail');
+// });

@@ -9,6 +9,7 @@ use App\Jobs\SendMailJob;
 use Carbon\Carbon;
 use App\User;
 use App\Mail\NewArrivals;
+use App\Trigger;
 use Illuminate\Support\Facades\DB;
 
 class MessagesController extends Controller
@@ -63,7 +64,7 @@ class MessagesController extends Controller
     }
 
     public function index(Request $request)
-    { 
+    {
         return emailtemplate::all();
     }
 
@@ -107,5 +108,27 @@ class MessagesController extends Controller
     {
         $res = emailtemplate::where('id', $request->get('id'))->delete();
         return $res;
+    }
+    public function indexTrigger(Request $request)
+    {
+        $templates = emailtemplate::where('instance_id', $request->get('instance_id'))->get();
+        $triggers = Trigger::where('instance_id', $request->get('instance_id'))->get();
+
+        $ret = array(
+            "templates" => $templates,
+            "triggers" => $triggers,
+        );
+        return $ret;
+    }
+
+    public function storeTrigger(Request $request)
+    {
+        $data = $request->all();
+        return Trigger::create($data);
+    }
+    public function updateTrigger(Request $request)
+    {
+        $data = $request->all();
+        return Trigger::whereId($request->get('id'))->update($data);
     }
 }

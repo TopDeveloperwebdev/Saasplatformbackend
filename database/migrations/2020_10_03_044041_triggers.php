@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class Messages extends Migration
+class Triggers extends Migration
 {
     /**
      * Run the migrations.
@@ -14,14 +14,12 @@ class Messages extends Migration
     public function up()
     {
         //
-        Schema::create('messages', function (Blueprint $table) {
+        Schema::create('triggers', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('title');
-            $table->longText('body');
-            $table->enum('delivered', ['YES', 'NO'])->default('NO');
-            $table->string('date_string')->nullable();
-            $table->timestamp('send_date');
-            $table->longText('receivers');
+            $table->string('template');
+            $table->string('type');
+            $table->longText('usergroup');  
+            $table->string('instance_id')->nullable();   
             $table->timestamps();
         });
     }
