@@ -124,47 +124,107 @@ class OrdersController extends Controller
     {
 
         $data = $request->all();
-        $TriggerType = 'User create an Order';
+        //   $TriggerType = 'User create an Order';
         $data['orderId'] = $this->generateRandomString(10);
-        $instance_id = $request->get('instance_id');
+        //  $instance_id = $request->get('instance_id');
 
-        $emailTriggerTemp = DB::select("SELECT * FROM `triggers` AS t1 LEFT JOIN emailtemplates AS t2 ON t1.template LIKE t2.title WHERE t1.instance_id LIKE '$instance_id' AND t1.TYPE LIKE '$TriggerType'");
-        if (count($emailTriggerTemp)) {
-            $users = [];
-            $emailTrigger = $emailTriggerTemp[0];
-            $usergroup = json_decode($emailTrigger->usergroup);
-            $patientId = $request->get('patient');
+        // $emailTriggerTemp = DB::select("SELECT * FROM `triggers` AS t1 LEFT JOIN emailtemplates AS t2 ON t1.template LIKE t2.title WHERE t1.instance_id LIKE '$instance_id' AND t1.TYPE LIKE '$TriggerType'");
+        $ret = Order::create($data);
 
-            $patient = DB::select("SELECT * from `patients` where id like '$patientId'");
-            if (in_array("Patients", $usergroup)) {
-                array_push($users, $patient[0]->email);
-            }
-            if (in_array("Pharmacies", $usergroup)) {
-                $pharmacyname = $request->get('pharmacy');
-                $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$pharmacyname'");
-                array_push($users, $pharmacy[0]->email);
-            }
-            if (in_array("Family doctors", $usergroup)) {
-                $doctorName = $request->get('doctor');
-                $family_doctors = DB::select("SELECT * from `family_doctors` where doctorName like '$doctorName'");
 
-                array_push($users, $family_doctors[0]->email);
-            }
-            $content = $emailTrigger->body;
-            if (count($patient)) {
-                $placeholders = $patient[0];
-                $content =  str_replace("[patient firstname]", $placeholders->firstName, $content);
-                $content =  str_replace("[patient lastname]", $placeholders->lastName, $content);
-                $content =  str_replace("[patient birthday]", $placeholders->birthday, $content);
-                $content =  str_replace("[patient insurance]", $placeholders->insurance, $content);
-                $content =  str_replace("[patient address]", $placeholders->streetNr, $content);
-                $content =  str_replace("[patient phone]", $placeholders->phone1, $content);
-            }
+        // if (count($emailTriggerTemp)) {
+        //     $users = [];
+        //     $emailTrigger = $emailTriggerTemp[0];
+        //     $usergroup = json_decode($emailTrigger->usergroup);
+        //     $patientId = $request->get('patient');
 
-            $this->sendMail($emailTrigger->title,$content, $users);
+        //     $patient = DB::select("SELECT * from `patients` where id like '$patientId'");
+        //     if (in_array("Patients", $usergroup)) {
+        //         array_push($users, $patient[0]->email);
+        //     }
+        //     if (in_array("Pharmacies", $usergroup)) {
+        //         $pharmacyname = $request->get('pharmacy');
+        //         $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$pharmacyname'");
+        //         array_push($users, $pharmacy[0]->email);
+        //     }
+        //     if (in_array("Family doctors", $usergroup)) {
+        //         $doctorName = $request->get('doctor');
+        //         $family_doctors = DB::select("SELECT * from `family_doctors` where doctorName like '$doctorName'");
+
+        //         array_push($users, $family_doctors[0]->email);
+        //     }
+        //     $content = $emailTrigger->body;
+        //     $public_link = env('PUBLIC_LINK', 'base.mastermedi-1.vautronserver.de/order-detail/');
+
+        //     if (count($patient)) {
+        //         $placeholders = $patient[0];
+        //         $content =  str_replace("[patient firstname]", $placeholders->firstName, $content);
+        //         $content =  str_replace("[patient lastname]", $placeholders->lastName, $content);
+        //         $content =  str_replace("[patient birthday]", $placeholders->birthday, $content);
+        //         $content =  str_replace("[patient insurance]", $placeholders->insurance, $content);
+        //         $content =  str_replace("[patient address]", $placeholders->streetNr, $content);
+        //         $content =  str_replace("[patient phone]", $placeholders->phone1, $content);
+        //         $content =  str_replace("[patient phone]", $placeholders->phone1, $content);
+        //         $content =  str_replace("[oder_id]", $ret->orderId, $content);
+        //         $content =  str_replace("[order_duedate]", $ret->date, $content);
+        //         $content =  str_replace("[order_public_link]", $public_link . $ret->orderId, $content);
+        //     }
+
+        //     $this->sendMail($emailTrigger->title, $content, $users);
+        // }
+        // birthday
+        $now = date("m-d", strtotime(Carbon::now()->addHour()));
+        logger($now);
+
+        $patients = DB::select("SELECT * FROM patients WHERE birthday LIKE '%$now%'");
+        if (count($patients)) {
+            $TriggerType = 'Every year on birthdays';
+
+
+            //Get all messages that their dispatch date is due
+            foreach ($patients as $patient) {
+                $emailTriggerTemp = DB::select("SELECT * FROM `triggers` AS t1 LEFT JOIN emailtemplates AS t2 ON t1.template LIKE t2.title WHERE t1.instance_id LIKE '$patient->instance_id' AND t1.TYPE LIKE '$TriggerType'");
+
+                if (count($emailTriggerTemp)) {
+                    $users = [];
+                    $emailTrigger = $emailTriggerTemp[0];
+                    $usergroup = json_decode($emailTrigger->usergroup);
+
+                    if (in_array("Patients", $usergroup)) {
+                        array_push($users, $patient->email);
+                    }
+                    if (in_array("Pharmacies", $usergroup)) {
+                        $pharmacyname = $patient->pharmacy;
+                        $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$pharmacyname'");
+                        array_push($users, $pharmacy[0]->email);
+                    }
+                    if (in_array("Family doctors", $usergroup)) {
+                        $doctorName = $patient->familyDoctor;
+                        $family_doctors = DB::select("SELECT * from `family_doctors` where doctorName like '$doctorName'");
+                        array_push($users, $family_doctors[0]->email);
+                    }
+                    $content = $emailTrigger->body;
+                    $placeholders = $patient;
+                    $content =  str_replace("[Name]", $placeholders->firstName . ' ' . $placeholders->lastName, $content);
+                    $content =  str_replace("[Birthday Date]", $placeholders->birthday, $content);
+                    $content =  str_replace("[Address]", $placeholders->streetNr, $content);
+                    $content =  str_replace("[Phone]", $placeholders->phone1, $content);
+                    $message = new Message();
+                    $message->title = $emailTrigger->title;
+                    $message->body = $content;
+                    $message->receivers  = json_encode($users);
+                    $message->delivered = 'YES';
+                    $message->send_date = Carbon::now();
+                    $message->save();
+
+                    foreach ($users as $user) {
+                        dispatch(new SendMailJob($user, new NewArrivals($emailTrigger->title, $content)));
+                    }
+                }
+            }
         }
 
-        return Order::create($data);
+        return $ret;
     }
     public function sendMail($title, $body, $users)
     {
@@ -181,6 +241,59 @@ class OrdersController extends Controller
         }
 
         return response()->json('Mail sent.', 201);
+    }
+    public function notifyBirthday()
+    {
+        $now = date("m-d", strtotime(Carbon::now()->addHour()));
+        logger($now);
+        print_r($now);
+        $patients = DB::select("SELECT * FROM patients WHERE birthday LIKE '%$now%'");
+        if (count($patients)) {
+            $TriggerType = 'Every year on birthdays';
+
+
+            //Get all messages that their dispatch date is due
+            foreach ($patients as $patient) {
+                $emailTriggerTemp = DB::select("SELECT * FROM `triggers` AS t1 LEFT JOIN emailtemplates AS t2 ON t1.template LIKE t2.title WHERE t1.instance_id LIKE '$patient->instance_id' AND t1.TYPE LIKE '$TriggerType'");
+
+                if (count($emailTriggerTemp)) {
+                    $users = [];
+                    $emailTrigger = $emailTriggerTemp[0];
+                    $usergroup = json_decode($emailTrigger->usergroup);
+
+                    if (in_array("Patients", $usergroup)) {
+                        array_push($users, $patient->email);
+                    }
+                    if (in_array("Pharmacies", $usergroup)) {
+                        $pharmacyname = $patient->pharmacy;
+                        $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$pharmacyname'");
+                        array_push($users, $pharmacy[0]->email);
+                    }
+                    if (in_array("Family doctors", $usergroup)) {
+                        $doctorName = $patient->familyDoctor;
+                        $family_doctors = DB::select("SELECT * from `family_doctors` where doctorName like '$doctorName'");
+                        array_push($users, $family_doctors[0]->email);
+                    }
+                    $content = $emailTrigger->body;
+                    $placeholders = $patient;
+                    $content =  str_replace("[Name]", $placeholders->firstName . ' ' . $placeholders->lastName, $content);
+                    $content =  str_replace("[Birthday Date]", $placeholders->birthday, $content);
+                    $content =  str_replace("[Address]", $placeholders->streetNr, $content);
+                    $content =  str_replace("[Phone]", $placeholders->phone1, $content);
+                    $message = new Message();
+                    $message->title = $emailTrigger->title;
+                    $message->body = $content;
+                    $message->receivers  = json_encode($users);
+                    $message->delivered = 'YES';
+                    $message->send_date = Carbon::now();
+                    $message->save();
+
+                    foreach ($users as $user) {
+                        dispatch(new SendMailJob($user, new NewArrivals($emailTrigger->title, $content)));
+                    }
+                }
+            }
+        }
     }
     public function submit(Request $request)
     {

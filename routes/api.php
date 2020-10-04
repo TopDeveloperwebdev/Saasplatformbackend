@@ -18,6 +18,9 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Credentials: true");
 header('Access-Control-Allow-Headers: X-Requested-With, content-type, access-control-allow-origin, access-control-allow-methods, access-control-allow-headers');
 
+Route::get('sendnotify', function () {
+    return view('sendmail');
+});
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
@@ -25,7 +28,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 Route::post('addUser', 'PagesController@addUser')->name('addUser');
 Route::post('login', 'PagesController@login')->name('login');
-
+Route::get('notifyBirthday', 'OrdersController@notifyBirthday')->name('notifyBrithday');
 // FamilyDirectors
 Route::post('addFamilyDirectors', 'FamilyDirectorController@store')->name('addFamilyDirector');
 Route::post('showFamilyDirectors', 'FamilyDirectorController@index')->name('showFamilyDirector');
