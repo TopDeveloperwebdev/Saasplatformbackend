@@ -17,8 +17,9 @@ class RolesController extends Controller
     public function index(Request $request)
     {
         $data = $request->all();
-        $roles = DB::select("SELECT * from `roles` order by id DESC ");
-        $permissions = DB::select("SELECT `permissions` from `permissions` order by id DESC ");
+     
+        $roles = DB::select("SELECT * from `roles` where role not like 'super administrator' order by id DESC ");
+        $permissions = DB::select("SELECT `permissions` from `permissions`  order by id DESC ");
         $ret = array(
             "roles" => $roles,
             "permissions" => $permissions

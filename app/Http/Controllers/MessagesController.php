@@ -65,7 +65,12 @@ class MessagesController extends Controller
 
     public function index(Request $request)
     {
-        return emailtemplate::all();
+
+        $instance_id = $request->get('instance_id');
+        
+        $res = DB::select("SELECT * FROM emailtemplates where instance_id like $instance_id");
+
+        return $res;
     }
 
 
@@ -111,9 +116,11 @@ class MessagesController extends Controller
     }
     public function indexTrigger(Request $request)
     {
-        $templates = emailtemplate::where('instance_id', $request->get('instance_id'))->get();
-        $triggers = Trigger::where('instance_id', $request->get('instance_id'))->get();
-
+        $instance_id = $request->get('instance_id');
+        $templates = DB::select("SELECT * FROM emailtemplates where instance_id like $instance_id");
+   
+        $triggers = DB::select("SELECT * FROM triggers where instance_id like $instance_id");;
+        
         $ret = array(
             "templates" => $templates,
             "triggers" => $triggers,

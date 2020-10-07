@@ -18,12 +18,17 @@ class FilesController extends Controller
     public function index(Request $request)
     {
         $data = $request->all();
-       $instance_id = $request->get('instance_id');
-        $documents = DB::select("SELECT t1.* ,t2.instanceName , t2.instanceLogo, t2.name , t2.email  FROM documents AS t1 LEFT JOIN (SELECT  instances.* , app_user.name , app_user.email  FROM instances  LEFT JOIN app_user ON instances.id LIKE app_user.instance_id WHERE app_user.isOwner LIKE 1) AS t2 ON t1.instance_id = t2.id ");
+        $instance_id = $request->get('instance_id');
+        if ($instance_id) {
+            $documents = DB::select("SELECT t1.* ,t2.instanceName , t2.instanceLogo, t2.name , t2.email  FROM documents AS t1 LEFT JOIN (SELECT  instances.* , app_user.name , app_user.email  FROM instances  LEFT JOIN app_user ON instances.id LIKE app_user.instance_id WHERE app_user.isOwner LIKE 1) AS t2 ON t1.instance_id = t2.id WHERE t1.instance_id LIKE $instance_id");
+        } else {
+            $documents = DB::select("SELECT t1.* ,t2.instanceName , t2.instanceLogo, t2.name , t2.email  FROM documents AS t1 LEFT JOIN (SELECT  instances.* , app_user.name , app_user.email  FROM instances  LEFT JOIN app_user ON instances.id LIKE app_user.instance_id WHERE app_user.isOwner LIKE 1) AS t2 ON t1.instance_id = t2.id");
+        }
+
 
         $instances = DB::select("SELECT * FROM instances ");
         $patients = DB::select("SELECT * FROM patients where instance_id like $instance_id");
-        
+
         $ret = array(
             "documents" => $documents,
             "instances" => $instances,
@@ -35,7 +40,12 @@ class FilesController extends Controller
     {
         $id = $request->get('instance_id');
 
-        $documents = DB::select("SELECT t1.* ,t2.instanceName , t2.instanceLogo, t2.name , t2.email  FROM documents AS t1 LEFT JOIN (SELECT  instances.* , app_user.name , app_user.email  FROM instances  LEFT JOIN app_user ON instances.id LIKE app_user.instance_id WHERE app_user.isOwner LIKE 1) AS t2 ON t1.instance_id = t2.id");
+
+        if ($id) {
+            $documents = DB::select("SELECT t1.* ,t2.instanceName , t2.instanceLogo, t2.name , t2.email  FROM documents AS t1 LEFT JOIN (SELECT  instances.* , app_user.name , app_user.email  FROM instances  LEFT JOIN app_user ON instances.id LIKE app_user.instance_id WHERE app_user.isOwner LIKE 1) AS t2 ON t1.instance_id = t2.id where t1.instance_id LIKE $id");
+        } else {
+            $documents = DB::select("SELECT t1.* ,t2.instanceName , t2.instanceLogo, t2.name , t2.email  FROM documents AS t1 LEFT JOIN (SELECT  instances.* , app_user.name , app_user.email  FROM instances  LEFT JOIN app_user ON instances.id LIKE app_user.instance_id WHERE app_user.isOwner LIKE 1) AS t2 ON t1.instance_id = t2.id");
+        }
 
         $services = DB::select("SELECT * from `services` order by id DESC ");
 

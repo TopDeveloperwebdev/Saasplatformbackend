@@ -88,9 +88,10 @@ class NotifyUsers extends Command
                     $message->delivered = 'YES';
                     $message->send_date = Carbon::now();
                     $message->save();
-
+                    $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE $patient->instance_id AND isOwner LIKE 1");
+                    $instnaceName = DB::select("SELECT instanceName FROM instances WHERE instance_id LIKE $patient->instance_id ");
                     foreach ($users as $user) {
-                        dispatch(new SendMailJob($user, new NewArrivals($emailTrigger->title, $content)));
+                        dispatch(new SendMailJob($user, new NewArrivals($emailTrigger->title, $content ,$instanceEmail[0]->email , $instnaceName[0]->instnaceName)));
                     }
                 }
             }

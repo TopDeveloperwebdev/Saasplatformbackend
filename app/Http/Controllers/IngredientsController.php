@@ -16,8 +16,7 @@ class IngredientsController extends Controller
      */
     public function index(Request $request)
     {
-        $data = $request->all();
-        $instance_id = $data['instance_id'];
+        $data = $request->all();      
         $res = DB::select("SELECT * from `ingredients` order by id DESC ");
 
         return $res;

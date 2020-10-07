@@ -130,7 +130,7 @@ class PagesController extends Controller
             } else {
                 $flights = AppUser::where('email', $data['email'])->get();
                 if (count($flights) == 0) {
-                                  
+                   $data['role']="super administrator";
                     $user = AppUser::create($data);                 
                     $ret = array(
                         "result" => "success",

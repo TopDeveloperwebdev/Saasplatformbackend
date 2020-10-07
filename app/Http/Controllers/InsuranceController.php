@@ -17,14 +17,7 @@ class InsuranceController extends Controller
     public function index(Request $request)
     {
         $data = $request->all();
-        $instance_id = $data['instance_id'];
-        if ($instance_id == 0) {
-            $res = DB::select("SELECT * from `insurances` order by id DESC ");
-        } else {
-
-            $res = DB::select("SELECT * from `insurances` where instance_id like $instance_id  order by id DESC ");
-        }
-
+        $res = DB::select("SELECT * from `insurances` order by id DESC ");
         return $res;
     }
 

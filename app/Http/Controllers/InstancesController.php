@@ -19,7 +19,7 @@ class InstancesController extends Controller
     {
         $data = $request->all();
 
-        $instances = DB::select("SELECT instances.* , app_user.userAvatar, app_user.name , app_user.email , app_user.password , app_user.role , app_user.status
+        $instances = DB::select("SELECT instances.* ,app_user.id as userId, app_user.userAvatar, app_user.name , app_user.email , app_user.password , app_user.role , app_user.status
         FROM instances
         LEFT JOIN app_user
         ON app_user.instance_id = instances.id WHERE  `isOwner` LIKE 1;");
@@ -112,7 +112,7 @@ class InstancesController extends Controller
             $instanceData->userAvatar = url('/') . '/file_storage/' . $filename;
         }
         $data = json_decode(json_encode($instanceData), true);
-
+     
         $instanceModel['id'] = $data['id'];
         $instanceModel['instanceLogo'] = $data['instanceLogo'];
         $instanceModel['instanceName'] = $data['instanceName'];
@@ -121,8 +121,10 @@ class InstancesController extends Controller
         $temp = $data;
         unset($data['instanceName']);
         unset($data['instanceLogo']);
-       
-        AppUser::whereId($data['id'])->update($data);       
+        unset($data['id']);
+        unset($data['userId']);
+        
+        AppUser::whereId($temp['userId'])->update($data);
 
         return $temp;
     }
@@ -133,7 +135,7 @@ class InstancesController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy(Request $request)
-    {       
+    {
         $res = Instance::where('id', $request->get('id'))->delete();
         return $res;
     }
