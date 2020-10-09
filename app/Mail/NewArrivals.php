@@ -30,7 +30,7 @@ class NewArrivals extends Mailable
      */
     public function build()
     {
-        return $this->from($this->instanceEmail ,$this->instanceEmail)
+        return $this->from($this->instanceEmail, $this->instanceEmail)
             ->replyTo($this->instanceEmail)
             ->subject($this->title)
             ->view('sendmail')

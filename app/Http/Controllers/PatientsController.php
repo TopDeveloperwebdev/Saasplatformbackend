@@ -25,7 +25,7 @@ class PatientsController extends Controller
         $family_doctors = DB::select("SELECT doctorName from `family_doctors` order by doctorName ASC ");
         $insurances = DB::select("SELECT insurances from `insurances` order by insurances ASC ");
         $pharmacies = DB::select("SELECT pharmacyName from `pharmacies` order by pharmacyName ASC ");
-          
+        $instances = DB::select("SELECT t1.* , t2.email , t2.name FROM instances AS t1 LEFT JOIN app_user AS t2 ON t1.id LIKE t2.instance_id WHERE t1.id like $instance_id  and t2.isOwner like 1");
         if ($instance_id == 0) {
             $patients = DB::select("SELECT * from `patients` order by id DESC ");
              $users = DB::select("SELECT * from `app_user` order by id DESC ");
@@ -35,7 +35,7 @@ class PatientsController extends Controller
             $patients = DB::select("SELECT * from `patients` where instance_id like $instance_id  order by id DESC ");          
             $users = DB::select("SELECT * from `app_user` where instance_id like $instance_id  order by id DESC ");         
         }
-        $documents = DB::select("SELECT t1.* ,t2.instanceName , t2.instanceLogo, t2.name , t2.email  FROM documents AS t1 LEFT JOIN (SELECT  instances.* , app_user.name , app_user.email  FROM instances  LEFT JOIN app_user ON instances.id LIKE app_user.instance_id WHERE app_user.isOwner LIKE 1) AS t2 ON t1.instance_id = t2.id");
+        $documents = DB::select("SELECT * FROM documents");
        
         $folders = DB::select("SELECT * from `carefolders` where instance_id like $instance_id order by id DESC");
         $ret = array(
@@ -47,7 +47,8 @@ class PatientsController extends Controller
             "pharmacies" => $pharmacies ,
             "users" => $users,
             "documents" =>$documents,
-            "folders" => $folders
+            "folders" => $folders,
+            "instances" => $instances
         );
         return $ret;
     }

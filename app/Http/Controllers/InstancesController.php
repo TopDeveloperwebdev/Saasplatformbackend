@@ -23,7 +23,7 @@ class InstancesController extends Controller
         FROM instances
         LEFT JOIN app_user
         ON app_user.instance_id = instances.id WHERE  `isOwner` LIKE 1;");
-        $roles = DB::select("SELECT `role` from `roles` order by id DESC ");
+        $roles = DB::select("SELECT `role` from `roles` where role not like 'super administrator' order by id DESC ");
 
         return  $ret = array(
             "instances" => $instances,

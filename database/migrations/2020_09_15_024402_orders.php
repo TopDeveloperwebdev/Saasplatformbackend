@@ -24,7 +24,8 @@ class Orders extends Migration
             $table->string('date')->nullable();
             $table->string('note')->nullable();
             $table->string('user_id')->nullable();
-             $table->string('status')->default("NO");
+            $table->string('instance_id')->nullable();
+             $table->boolean('status')->default(false);
             $table->timestamps();
         });
     }

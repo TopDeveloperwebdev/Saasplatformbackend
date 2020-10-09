@@ -55,10 +55,10 @@ return [
     |
     */
 
-    'from' => [
-        'address' => env('MAIL_USERNAME', 'vladimir.bognar.1979@gmail.com'),
-        'name' =>'Admin'
-    ],
+    // 'from' => [
+    //     'address' => env('MAIL_USERNAME', 'vladimir.bognar.1979@gmail.com'),
+    //     'name' =>'Admin'
+    // ],
     /*
     |--------------------------------------------------------------------------
     | E-Mail Encryption Protocol

@@ -23,10 +23,10 @@ class OrdersController extends Controller
      */
     public function index(Request $request)
     {
-        $instance_id = $request->get('instance_id');       
+        $instance_id = $request->get('instance_id');
         $patients = [];
 
-        $medications = DB::select("SELECT medicationName from `medications` where instance_id like $instance_id order by medicationName ASC ");
+        $medications = DB::select("SELECT medicationName from `medications` order by medicationName ASC ");
 
 
 
@@ -37,7 +37,7 @@ class OrdersController extends Controller
             //  $res = Patient::where('instance_id', $data['instance_id'])->orderBy('id', 'DESC')->paginate($data['pagination']);
             $patients = DB::select("SELECT * from `patients` where instance_id like $instance_id  order by id DESC ");
 
-            $orders = DB::select("SELECT * FROM orders  WHERE orders.user_id LIKE $instance_id order by orders.created_at DESC");
+            $orders = DB::select("SELECT * FROM orders  WHERE orders.instance_id LIKE $instance_id order by orders.created_at DESC");
         }
 
         $ret = array(
@@ -50,7 +50,7 @@ class OrdersController extends Controller
     public function getDetail(Request $request)
     {
         $orderId = $request->get('orderId');
-        $orderTemp = DB::select("SELECT * FROM orders LEFT JOIN app_user ON orders.user_id LIKE app_user.id where orderId like '$orderId'");
+        $orderTemp = DB::select("SELECT *  FROM orders where orderId like '$orderId'");
         $ret = [];
         if (count($orderTemp)) {
             $order = $orderTemp[0];
@@ -58,13 +58,18 @@ class OrdersController extends Controller
             $patient = DB::select("SELECT * from `patients` where id like '$order->patient'");
             $doctor = DB::select("SELECT * from `family_doctors` where doctorName like '$order->doctor'");
             $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$order->pharmacy'");
-            $user = DB::select("SELECT name , id , userAvatar from `app_user` where id like '$order->user_id'");
+            $user = DB::select("SELECT name , id , userAvatar from `app_user` where id like '$order->user_id'");       
 
-            $patientId = $patient[0]->id;
-
-            $lastOrderTemp = DB::select("SELECT * FROM orders WHERE patient LIKE $patientId ORDER BY created_at DESC  LIMIT 1");
-            $lastOrder = $lastOrderTemp[0];
-            $lastUser = DB::select("SELECT name ,id, userAvatar from `app_user` where id like '$lastOrder->user_id'");
+            $lastOrderTemp = DB::select("SELECT * FROM orders where instance_id like $order->instance_id ORDER BY created_at DESC  LIMIT 2");
+            $lastUser = [];
+            $lastOrder = '';
+            if(count($lastOrderTemp) > 1){
+                $lastOrder = $lastOrderTemp[1];                
+                $lastUser = DB::select("SELECT name ,id, userAvatar from `app_user` where id like '$lastOrder->user_id'");
+            }
+           
+           
+           
             $instance = DB::select("SELECT * from `instances` where id like '$order->instance_id'");
             $orderMedications = json_decode($order->orderMedications);
             $Medications = DB::table('medications')->whereIn('medicationName', $orderMedications)->get();
@@ -121,16 +126,17 @@ class OrdersController extends Controller
      */
     public function store(Request $request)
     {
-
+        
         $data = $request->all();
         $TriggerType = 'User create an Order';
         $data['orderId'] = $this->generateRandomString(10);
-        $instance_id = $request->get('user_id');
-
-        $emailTriggerTemp = DB::select("SELECT * FROM `triggers` AS t1 LEFT JOIN emailtemplates AS t2 ON t1.template LIKE t2.title WHERE t1.instance_id LIKE '$instance_id' AND t1.TYPE LIKE '$TriggerType'");    
+        $instance_id = $request->get('instance_id');
+   
+        $emailTriggerTemp = DB::select("SELECT * FROM `triggers` AS t1 LEFT JOIN emailtemplates AS t2 ON t1.template LIKE t2.title WHERE t1.instance_id LIKE '$instance_id' AND t1.TYPE LIKE '$TriggerType'");
+       
         $ret = Order::create($data);
 
-
+              
         if (count($emailTriggerTemp)) {
             $users = [];
             $emailTrigger = $emailTriggerTemp[0];
@@ -162,20 +168,22 @@ class OrdersController extends Controller
                 }
             }
             $content = $emailTrigger->body;
-            $public_link = env('PUBLIC_LINK', 'base.mastermedi-1.vautronserver.de/order-detail/');
-           
+            $href = 'http://base.mastermedi-1.vautronserver.de/order-detail/'.$ret->orderId;
+            $public_link = "<a href=".$href.">".$ret->orderId."</a>";
+        
+
             if (count($patient)) {
-                $placeholders = $patient[0];     
+                $placeholders = $patient[0];
                 $content =  str_replace("[patient firstname]", $placeholders->firstName, $content);
                 $content =  str_replace("[patient lastname]", $placeholders->lastName, $content);
-                $content =  str_replace("[patient birthday]", $this->formate_date($placeholders->birthday) , $content);
+                $content =  str_replace("[patient birthday]", $this->formate_date($placeholders->birthday), $content);
                 $content =  str_replace("[patient insurance]", $placeholders->insurance, $content);
                 $content =  str_replace("[patient address]", $placeholders->streetNr, $content);
                 $content =  str_replace("[patient phone]", $placeholders->phone1, $content);
                 $content =  str_replace("[patient phone]", $placeholders->phone1, $content);
                 $content =  str_replace("[oder_id]", $ret->orderId, $content);
-                $content =  str_replace("[order_duedate]", $ret->date, $content);
-                $content =  str_replace("[order_public_link]", $public_link . $ret->orderId, $content);
+                $content =  str_replace("[order_duedate]", $this->formate_date($ret->date), $content);
+                $content =  str_replace("[order_public_link]", $public_link, $content);
                 if ($placeholders->instance_id == '0') {
                     $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE '0'");
                     $email = $instanceEmail[0]->email;
@@ -183,24 +191,25 @@ class OrdersController extends Controller
                     $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE $placeholders->instance_id AND isOwner LIKE 1");
                     $email = $instanceEmail[0]->email;
                 }
-            }
-
-
-            $this->sendMail($emailTrigger->title, $content, $users, $email);
+            }             
+            $title =  $emailTrigger->title;
+            $title =  str_replace("[order_id]", $ret->orderId,  $title);       
+            $this->sendMail($title, $content, $users, $email);
         }
 
 
         return $ret;
     }
-    public function formate_date($dateString){
+    public function formate_date($dateString)
+    {
         $date = '';
-     
-		if ($dateString) {		
-            $date = explode('-',$dateString);            
-            $dateStr = $date[2] . '.' . $date[1] . '.' . $date[0];       
-		}
 
-		return $dateStr;
+        if ($dateString) {
+            $date = explode('-', $dateString);
+            $dateStr = $date[2] . '.' . $date[1] . '.' . $date[0];
+        }
+
+        return $dateStr;
     }
     public function sendMail($title, $body, $users, $instanceEmail)
     {

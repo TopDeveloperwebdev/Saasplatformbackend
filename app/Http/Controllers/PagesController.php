@@ -34,7 +34,7 @@ class PagesController extends Controller
             $users = DB::select("SELECT * from `app_user` where instance_id != 0 order by id DESC ");
         }
 
-        $roles = DB::select("SELECT `role` from `roles` order by id DESC ");
+        $roles = DB::select("SELECT `role` from `roles` where role not like 'super administrator' order by id DESC ");
         $instances = DB::select("SELECT * from `instances` order by id DESC ");
 
         return  $ret = array(
@@ -54,7 +54,7 @@ class PagesController extends Controller
     public function store(Request $request)
     {
 
-      
+
         $data = json_decode($request->get('data'));
         //file save
         if ($request->hasFile('file')) {
@@ -68,7 +68,6 @@ class PagesController extends Controller
 
         $Array = json_decode(json_encode($data), true);
         return AppUser::create($Array);
-        
     }
 
 
@@ -80,7 +79,7 @@ class PagesController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request)
-    { 
+    {
 
         $data = json_decode($request->get('data'));
         //file save
@@ -97,7 +96,7 @@ class PagesController extends Controller
 
         $Array = json_decode(json_encode($data), true);
 
-         AppUser::whereId($Array['id'])->update($Array);
+        AppUser::whereId($Array['id'])->update($Array);
         return $Array;
     }
 
@@ -130,11 +129,11 @@ class PagesController extends Controller
             } else {
                 $flights = AppUser::where('email', $data['email'])->get();
                 if (count($flights) == 0) {
-                   $data['role']="super administrator";
-                    $user = AppUser::create($data);                 
+                    $data['role'] = "super administrator";
+                    $user = AppUser::create($data);
                     $ret = array(
                         "result" => "success",
-                        "user" => $user,                      
+                        "user" => $user,
                     );
                 } else {
                     $ret = array(
@@ -145,11 +144,11 @@ class PagesController extends Controller
         } else {
             $flights = AppUser::where('email', $data['email'])->get();
             if (count($flights) == 0) {
-                $user = AppUser::create($data);                 
+                $user = AppUser::create($data);
                 $ret = array(
                     "result" => "success",
-                    "user" => $user,                      
-                );               
+                    "user" => $user,
+                );
             } else {
                 $ret = array(
                     "result" => "exist"
@@ -162,7 +161,7 @@ class PagesController extends Controller
     }
     public function login(Request $request)
     {
-
+     
         $data = $request->all();
         $md5pwd =  md5($data['password']);
         $ret = DB::select("SELECT app_user.* , roles.permissions
@@ -175,7 +174,7 @@ class PagesController extends Controller
                 "result" => "failed",
                 "user" => null
             );
-        } else {         
+        } else {
             $result = array(
                 "result" => "success",
                 "user" => $ret[0]
@@ -203,6 +202,36 @@ class PagesController extends Controller
             $ret = array(
                 "result" => "exist"
             );
+        }
+
+        return $ret;
+    }
+    public function resetPassword(Request $request)
+    {
+
+        $data = $request->all();
+        $flights = AppUser::whereId($data['id'])->get();
+
+        if (count($flights) == 0) {
+            $ret = array(
+                "result" => "failed"
+            );
+        } else {
+
+            $md5pwd =  md5($data['password']);
+
+            if ($flights[0]->password == $data['password'] || $flights[0]->password == $md5pwd) {
+
+                $flights = AppUser::whereId($data['id'])
+                    ->update(['password' => $data['newPassword']]);
+                $ret = array(
+                    "result" => "success"
+                );
+            } else {
+                $ret = array(
+                    "result" => "failed"
+                );
+            }
         }
 
         return $ret;

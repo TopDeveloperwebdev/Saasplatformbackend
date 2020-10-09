@@ -67,8 +67,14 @@ class MessagesController extends Controller
     {
 
         $instance_id = $request->get('instance_id');
-        
-        $res = DB::select("SELECT * FROM emailtemplates where instance_id like $instance_id");
+        if($instance_id){
+            $res = DB::select("SELECT * FROM emailtemplates where instance_id like $instance_id");
+        }
+        else {
+            $res = DB::select("SELECT * FROM emailtemplates ");
+        }
+       
+       
 
         return $res;
     }

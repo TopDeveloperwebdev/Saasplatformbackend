@@ -112,7 +112,7 @@ Route::post('addUsers', 'PagesController@store')->name('addUsers');
 Route::post('showUsers', 'PagesController@index')->name('showUsers');
 Route::post('editUsers', 'PagesController@update')->name('editUsers');
 Route::post('deleteUsers', 'PagesController@destroy')->name('deleteUsers');
-
+Route::post('resetPassword', 'PagesController@resetPassword')->name('resetPassword');
 
 //  FilesController
 Route::post('addDocuments', 'FilesController@store')->name('addDocuments');
