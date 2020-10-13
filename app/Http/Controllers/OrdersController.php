@@ -58,18 +58,18 @@ class OrdersController extends Controller
             $patient = DB::select("SELECT * from `patients` where id like '$order->patient'");
             $doctor = DB::select("SELECT * from `family_doctors` where doctorName like '$order->doctor'");
             $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$order->pharmacy'");
-            $user = DB::select("SELECT name , id , userAvatar from `app_user` where id like '$order->user_id'");       
+            $user = DB::select("SELECT name , id , userAvatar from `app_user` where id like '$order->user_id'");
 
             $lastOrderTemp = DB::select("SELECT * FROM orders where instance_id like $order->instance_id ORDER BY created_at DESC  LIMIT 2");
             $lastUser = [];
             $lastOrder = '';
-            if(count($lastOrderTemp) > 1){
-                $lastOrder = $lastOrderTemp[1];                
+            if (count($lastOrderTemp) > 1) {
+                $lastOrder = $lastOrderTemp[1];
                 $lastUser = DB::select("SELECT name ,id, userAvatar from `app_user` where id like '$lastOrder->user_id'");
             }
-           
-           
-           
+
+
+
             $instance = DB::select("SELECT * from `instances` where id like '$order->instance_id'");
             $orderMedications = json_decode($order->orderMedications);
             $Medications = DB::table('medications')->whereIn('medicationName', $orderMedications)->get();
@@ -126,17 +126,18 @@ class OrdersController extends Controller
      */
     public function store(Request $request)
     {
-        
+
         $data = $request->all();
         $TriggerType = 'User create an Order';
         $data['orderId'] = $this->generateRandomString(10);
         $instance_id = $request->get('instance_id');
-   
+
         $emailTriggerTemp = DB::select("SELECT * FROM `triggers` AS t1 LEFT JOIN emailtemplates AS t2 ON t1.template LIKE t2.title WHERE t1.instance_id LIKE '$instance_id' AND t1.TYPE LIKE '$TriggerType'");
-       
+
         $ret = Order::create($data);
 
-              
+
+
         if (count($emailTriggerTemp)) {
             $users = [];
             $emailTrigger = $emailTriggerTemp[0];
@@ -167,10 +168,29 @@ class OrdersController extends Controller
                     }
                 }
             }
+            $instance_users = [];
+            if (in_array("Related Users", $usergroup) && count($patient)) {
+                $usergroup =  json_decode($patient[0]->userGroup);  
+                if(count($usergroup)){
+                    if($usergroup[0] == 'all'){
+                        $instance_users = DB::select("SELECT email from `app_user` where instance_id not like 0");                        
+                    }
+                    else {
+                        $instance_users = DB::table('app_user')->whereIn('name', $usergroup)->get();
+                    }
+                }             
+            }
+            if(count($instance_users)){
+               foreach ($instance_users as $instance_user) {
+                array_push($users, $instance_user->email);
+               }
+            }
+            return $users;
             $content = $emailTrigger->body;
-            $href = 'http://base.mastermedi-1.vautronserver.de/order-detail/'.$ret->orderId;
-            $public_link = "<a href=".$href.">".$ret->orderId."</a>";
-        
+            $href = 'http://base.mastermedi-1.vautronserver.de/order-detail/' . $ret->orderId;
+            $public_link = "<a href=" . $href . ">" . $ret->orderId . "</a>";
+            $email = 'mail@base.care';
+            $name = "base.care";
 
             if (count($patient)) {
                 $placeholders = $patient[0];
@@ -184,17 +204,22 @@ class OrdersController extends Controller
                 $content =  str_replace("[oder_id]", $ret->orderId, $content);
                 $content =  str_replace("[order_duedate]", $this->formate_date($ret->date), $content);
                 $content =  str_replace("[order_public_link]", $public_link, $content);
+
+
                 if ($placeholders->instance_id == '0') {
                     $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE '0'");
                     $email = $instanceEmail[0]->email;
+                    $name = "base.care";
                 } else {
                     $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE $placeholders->instance_id AND isOwner LIKE 1");
-                    $email = $instanceEmail[0]->email;
+                    $instanceName = DB::select("SELECT instanceName FROM instances WHERE id LIKE $placeholders->instance_id ");
+                    if (count($instanceEmail)) $email = $instanceEmail[0]->email;
+                    if (count($instanceName)) $name = $instanceName[0]->instanceName;
                 }
-            }             
+            }
             $title =  $emailTrigger->title;
-            $title =  str_replace("[order_id]", $ret->orderId,  $title);       
-            $this->sendMail($title, $content, $users, $email);
+            $title =  str_replace("[order_id]", $ret->orderId,  $title);
+            $this->sendMail($title, $content, $users, $email, $name);
         }
 
 
@@ -211,7 +236,7 @@ class OrdersController extends Controller
 
         return $dateStr;
     }
-    public function sendMail($title, $body, $users, $instanceEmail)
+    public function sendMail($title, $body, $users, $instanceEmail , $name)
     {
         $message = new Message();
         $message->title = $title;
@@ -222,7 +247,7 @@ class OrdersController extends Controller
         $message->save();
 
         foreach ($users as $user) {
-            dispatch(new SendMailJob($user, new NewArrivals($title, $body, $instanceEmail)));
+            dispatch(new SendMailJob($user, new NewArrivals($title, $body, $instanceEmail , $name)));
         }
 
         return response()->json('Mail sent.', 201);
@@ -270,6 +295,7 @@ class OrdersController extends Controller
                             }
                         }
                     }
+                  
                     $content = $emailTrigger->body;
                     $placeholders = $patient;
                     $content =  str_replace("[Name]", $placeholders->firstName . ' ' . $placeholders->lastName, $content);
@@ -283,15 +309,20 @@ class OrdersController extends Controller
                     $message->delivered = 'YES';
                     $message->send_date = Carbon::now();
                     $message->save();
+                    $email = 'mail@base.care';
+                    $name = "base.care";
                     if ($placeholders->instance_id == '0') {
                         $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE '0'");
                         $email = $instanceEmail[0]->email;
+                        $name = "base.care";
                     } else {
                         $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE $placeholders->instance_id AND isOwner LIKE 1");
-                        $email = $instanceEmail[0]->email;
-                    }
+                        $instanceName = DB::select("SELECT instanceName FROM instances WHERE id LIKE $placeholders->instance_id ");
+                        if (count($instanceEmail)) $email = $instanceEmail[0]->email;
+                        if (count($instanceName)) $name = $instanceName[0]->instanceName;
+                    }                 
                     foreach ($users as $user) {
-                        dispatch(new SendMailJob($user, new NewArrivals($emailTrigger->title, $content, $email)));
+                        dispatch(new SendMailJob($user, new NewArrivals($emailTrigger->title, $content, $email, $name)));
                     }
                 }
             }

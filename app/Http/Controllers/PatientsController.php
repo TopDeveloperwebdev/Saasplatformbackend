@@ -26,17 +26,19 @@ class PatientsController extends Controller
         $insurances = DB::select("SELECT insurances from `insurances` order by insurances ASC ");
         $pharmacies = DB::select("SELECT pharmacyName from `pharmacies` order by pharmacyName ASC ");
         $instances = DB::select("SELECT t1.* , t2.email , t2.name FROM instances AS t1 LEFT JOIN app_user AS t2 ON t1.id LIKE t2.instance_id WHERE t1.id like $instance_id  and t2.isOwner like 1");
+        $instanceNames = DB::select("SELECT  id , instanceName from `instances` ");
+
         if ($instance_id == 0) {
             $patients = DB::select("SELECT * from `patients` order by id DESC ");
-             $users = DB::select("SELECT * from `app_user` order by id DESC ");
+            $users = DB::select("SELECT * from `app_user` order by id DESC ");
         } else {
             //  $res = Patient::where('instance_id', $data['instance_id'])->orderBy('id', 'DESC')->paginate($data['pagination']);
-           
-            $patients = DB::select("SELECT * from `patients` where instance_id like $instance_id  order by id DESC ");          
-            $users = DB::select("SELECT * from `app_user` where instance_id like $instance_id  order by id DESC ");         
+
+            $patients = DB::select("SELECT * from `patients` where instance_id like $instance_id  order by id DESC ");
+            $users = DB::select("SELECT * from `app_user` where instance_id like $instance_id  order by id DESC ");
         }
         $documents = DB::select("SELECT * FROM documents");
-       
+
         $folders = DB::select("SELECT * from `carefolders` where instance_id like $instance_id order by id DESC");
         $ret = array(
             "patients" => $patients,
@@ -44,11 +46,12 @@ class PatientsController extends Controller
             "resources" => $resources,
             "family_doctors" => $family_doctors,
             "insurances" => $insurances,
-            "pharmacies" => $pharmacies ,
+            "pharmacies" => $pharmacies,
             "users" => $users,
-            "documents" =>$documents,
+            "documents" => $documents,
             "folders" => $folders,
-            "instances" => $instances
+            "instances" => $instances,
+            "instanceNames" => $instanceNames
         );
         return $ret;
     }

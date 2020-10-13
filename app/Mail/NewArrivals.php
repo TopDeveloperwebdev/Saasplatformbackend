@@ -14,13 +14,15 @@ class NewArrivals extends Mailable
     protected $title;
     protected $body;
     protected $instanceEmail;
+     protected $name;
 
 
-    public function __construct($title, $body, $instanceEmail)
+    public function __construct($title, $body, $instanceEmail , $name)
     {
         $this->title = $title;
         $this->body = $body;
         $this->instanceEmail = $instanceEmail;
+        $this->name = $name;
     }
 
     /**
@@ -30,7 +32,7 @@ class NewArrivals extends Mailable
      */
     public function build()
     {
-        return $this->from($this->instanceEmail, $this->instanceEmail)
+        return $this->from($this->instanceEmail, $this->name)
             ->replyTo($this->instanceEmail)
             ->subject($this->title)
             ->view('sendmail')
