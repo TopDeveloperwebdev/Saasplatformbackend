@@ -116,11 +116,15 @@ class InstancesController extends Controller
         $instanceModel['id'] = $data['id'];
         $instanceModel['instanceLogo'] = $data['instanceLogo'];
         $instanceModel['instanceName'] = $data['instanceName'];
+          $instanceModel['phone'] = $data['phone'];
+        $instanceModel['fax'] = $data['fax'];
 
         Instance::whereId($instanceModel['id'])->update($instanceModel);
         $temp = $data;
         unset($data['instanceName']);
         unset($data['instanceLogo']);
+        unset($data['phone']);
+        unset($data['fax']);
         unset($data['id']);
         unset($data['userId']);
         

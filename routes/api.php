@@ -135,6 +135,14 @@ Route::post('notifications', 'MessagesController@sendMail');
 Route::post('showTriggers', 'MessagesController@indexTrigger')->name('showTriggers');
 Route::post('addTriggers', 'MessagesController@storeTrigger')->name('addTriggers');
 Route::post('editTriggers', 'MessagesController@updateTrigger')->name('editTriggers');
+
+Route::post('showVerordnung', 'FilesController@indexVerordnung')->name('showVerordnung');
+Route::post('addVerordnung', 'FilesController@storeVerordnung')->name('addVerordnung');
+Route::post('editVerordnung', 'FilesController@updateVerordnung')->name('editVerordnung');
+Route::post('deleteVerordnung', 'FilesController@destroyVerordnung')->name('destroyVerordnung');
+Route::post('getVerordnung', 'FilesController@getVerordnung')->name('getVerordnung');
+Route::post('sendMail', 'FilesController@sendMail')->name('sendMail');
+
 // Route::get('get_users', 'MessagesController@getUsers');
 // Route::get('get_messages', 'MessagesController@getMessages');
 
