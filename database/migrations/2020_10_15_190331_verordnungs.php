@@ -23,6 +23,7 @@ class Verordnungs extends Migration
             $table->string('type')->nullable();
             $table->string('instance_id')->nullable();
             $table->string('send_date')->nullable();
+            $table->boolean('status')->default(false);
             $table->timestamps();
         });
     

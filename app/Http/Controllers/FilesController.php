@@ -150,13 +150,15 @@ class FilesController extends Controller
         $instance_id = $request->get('instance_id') ;
         $verordnungs = DB::select("SELECT *  FROM verordnungs where instance_id like $instance_id"); 
         $patients = DB::select("SELECT *  FROM patients where instance_id like $instance_id");
-        $instance = DB::select("SELECT * from instances where id like $instance_id");
+        $instance = DB::select("SELECT instances.* , app_user.email  FROM instances LEFT JOIN app_user  ON app_user.instance_id = instances.id WHERE  app_user.isOwner LIKE 1 and instances.id like $instance_id");
         $doctors = DB::select("SELECT * from family_doctors");
+        $services = DB::select("SELECT * from services");
         $ret = array(
             "verordnungs" => $verordnungs,
             "patients" => $patients,
             "instance" => $instance,
-            "doctors" => $doctors
+            "doctors" => $doctors,
+            "services" => $services
         );
         return $ret;
     } 

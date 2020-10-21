@@ -118,7 +118,9 @@ class InstancesController extends Controller
         $instanceModel['instanceName'] = $data['instanceName'];
           $instanceModel['phone'] = $data['phone'];
         $instanceModel['fax'] = $data['fax'];
-
+        $instanceModel['streetNr'] = $data['streetNr'];
+        $instanceModel['zip'] = $data['zip'];
+        $instanceModel['city'] = $data['city'];
         Instance::whereId($instanceModel['id'])->update($instanceModel);
         $temp = $data;
         unset($data['instanceName']);
@@ -127,7 +129,9 @@ class InstancesController extends Controller
         unset($data['fax']);
         unset($data['id']);
         unset($data['userId']);
-        
+        unset($data['streetNr']);
+        unset($data['zip']);
+        unset($data['city']);      
         AppUser::whereId($temp['userId'])->update($data);
 
         return $temp;

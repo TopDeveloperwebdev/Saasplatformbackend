@@ -21,6 +21,9 @@ class Instances extends Migration
             $table->string('instanceName')->nullable();     
             $table->string('phone')->nullable();
             $table->string('fax')->nullable();   
+             $table->string('streetNr')->nullable();
+              $table->string('city')->nullable();
+            $table->string('zip')->nullable();   
             $table->timestamps();
         });
     }
