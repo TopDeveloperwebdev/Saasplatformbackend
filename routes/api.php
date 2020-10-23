@@ -34,7 +34,11 @@ Route::post('addFamilyDirectors', 'FamilyDirectorController@store')->name('addFa
 Route::post('showFamilyDirectors', 'FamilyDirectorController@index')->name('showFamilyDirector');
 Route::post('editFamilyDirectors', 'FamilyDirectorController@update')->name('editFamilyDirector');
 Route::post('deleteFamilyDirectors', 'FamilyDirectorController@destroy')->name('deleteFamilyDirectors');
-
+// CareManagers
+Route::post('addCaremanagers', 'CaremanagerController@store')->name('addCaremanager');
+Route::post('showCaremanagers', 'CaremanagerController@index')->name('showCaremanager');
+Route::post('editCaremanagers', 'CaremanagerController@update')->name('editCaremanager');
+Route::post('deleteCaremanagers', 'CaremanagerController@destroy')->name('deleteCaremanagers');
 //  Patients
 Route::post('addPharmacies', 'PharmaciesController@store')->name('addPharmacies');
 Route::post('showPharmacies', 'PharmaciesController@index')->name('showPharmacies');

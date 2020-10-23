@@ -32,6 +32,7 @@ class Patients extends Migration
             $table->string('insuranceNr')->nullable();
             $table->longText('services')->nullable();
             $table->string('familyDoctor')->nullable();
+            $table->integer('caremanager')->nullable();
             $table->integer('keyNumber')->nullable();
             $table->integer('floor')->nullable();
             $table->string('degreeCare')->nullable();

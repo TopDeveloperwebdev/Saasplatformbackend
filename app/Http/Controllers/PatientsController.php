@@ -40,6 +40,7 @@ class PatientsController extends Controller
         $documents = DB::select("SELECT * FROM documents");
 
         $folders = DB::select("SELECT * from `carefolders` where instance_id like $instance_id order by id DESC");
+        $caremanagers = DB::select("SELECT * from `caremanagers` order by ansprechpartner DESC");
         $ret = array(
             "patients" => $patients,
             "services" => $services,
@@ -51,7 +52,8 @@ class PatientsController extends Controller
             "documents" => $documents,
             "folders" => $folders,
             "instances" => $instances,
-            "instanceNames" => $instanceNames
+            "instanceNames" => $instanceNames,
+            "caremanagers" => $caremanagers
         );
         return $ret;
     }
