@@ -193,7 +193,7 @@ class OrdersController extends Controller
                 array_push($users, $instance_user->email);
                }
             }
-          
+        
             $content = $emailTrigger->body;
             $href = 'http://base.mastermedi-1.vautronserver.de/order-detail/' . $ret->orderId;
             $public_link = "<a href=" . $href . ">" . $ret->orderId . "</a>";
@@ -350,17 +350,19 @@ class OrdersController extends Controller
         $TriggerType = 'Kommentar für Bestellung';      
         $orderId = $request->get('orderId');
         $comment = $request->get('comment');
-        $orderTemp = DB::select("SELECT instance_id , patient  from 'orders' where orderId like $orderId");
+        $orderTemp = DB::select("SELECT * FROM `orders` WHERE `orderId` LIKE '$orderId'" );
         $instance_id = $orderTemp[0]->instance_id;
         $patientId = $orderTemp[0]->patient;
-
+        
         $emailTriggerTemp = DB::select("SELECT * FROM `triggers` AS t1 LEFT JOIN emailtemplates AS t2 ON t1.template LIKE t2.title WHERE t1.instance_id LIKE '$instance_id' AND t1.TYPE LIKE '$TriggerType'");
        
-
+      
         if (count($emailTriggerTemp)) {
             $users = [];
             $emailTrigger = $emailTriggerTemp[0];
-            $usergroup = json_decode($emailTrigger->usergroup);        
+            
+            $usergroup = json_decode($emailTrigger->usergroup); 
+          
             $patient = DB::select("SELECT * from `patients` where id like '$patientId'");
             if (in_array("Patients", $usergroup) && count($patient)) {
                 if ($patient[0]->email && $patient[0]->serviceplan) {
@@ -375,62 +377,59 @@ class OrdersController extends Controller
                         }
                     }
                 }
-            }
-            if (in_array("Pharmacies", $usergroup)) {
-                $pharmacyname = $request->get('pharmacy');
-                $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$pharmacyname'");
-                if (count($pharmacy)) {
-                    if ($pharmacy[0]->email && $pharmacy[0]->notifications) {
-                        array_push($users, $pharmacy[0]->email);
+                if (in_array("Pharmacies", $usergroup)) {
+                    $pharmacyname = $patient[0]->pharmacy;
+                    $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$pharmacyname'");
+                    if (count($pharmacy)) {
+                        if ($pharmacy[0]->email && $pharmacy[0]->notifications) {
+                            array_push($users, $pharmacy[0]->email);
+                        }
                     }
                 }
-            }
-            if (in_array("Family doctors", $usergroup)) {
-                $doctorName = $request->get('doctor');
-                $family_doctors = DB::select("SELECT * from `family_doctors` where doctorName like '$doctorName'");
-                if (count($family_doctors)) {
-                    if ($family_doctors[0]->email && $family_doctors[0]->notifications) {
-                        array_push($users, $family_doctors[0]->email);
+                if (in_array("Family doctors", $usergroup)) {
+                    $doctorName =  $patient[0]->familyDoctor;
+                    $family_doctors = DB::select("SELECT * from `family_doctors` where doctorName like '$doctorName'");
+                    if (count($family_doctors)) {
+                        if ($family_doctors[0]->email && $family_doctors[0]->notifications) {
+                            array_push($users, $family_doctors[0]->email);
+                        }
                     }
                 }
+              
+                $instance_users = [];
+                if (in_array("Related Users", $usergroup) && count($patient)) {
+                    $usergroup =  json_decode($patient[0]->userGroup);  
+                    if(count($usergroup)){
+                        if($usergroup[0] == 'all'){
+                            $instance_users = DB::select("SELECT email from `app_user` where instance_id not like 0");                        
+                        }
+                        else {
+                            $instance_users = DB::table('app_user')->whereIn('name', $usergroup)->get();
+                        }
+                    }             
+                }
+                if(count($instance_users)){
+                   foreach ($instance_users as $instance_user) {
+                    array_push($users, $instance_user->email);
+                   }
+                }
             }
-          
-            $instance_users = [];
-            if (in_array("Related Users", $usergroup) && count($patient)) {
-                $usergroup =  json_decode($patient[0]->userGroup);  
-                if(count($usergroup)){
-                    if($usergroup[0] == 'all'){
-                        $instance_users = DB::select("SELECT email from `app_user` where instance_id not like 0");                        
-                    }
-                    else {
-                        $instance_users = DB::table('app_user')->whereIn('name', $usergroup)->get();
-                    }
-                }             
-            }
-            if(count($instance_users)){
-               foreach ($instance_users as $instance_user) {
-                array_push($users, $instance_user->email);
-               }
-            }
-            return $users;
-            $content = $emailTrigger->body;
-            $href = 'http://base.mastermedi-1.vautronserver.de/order-detail/' . $ret->orderId;
-            $public_link = "<a href=" . $href . ">" . $ret->orderId . "</a>";
+           
+         
+            $content = $emailTrigger->body;        
             $email = 'mail@base.care';
             $name = "base.care";
 
             if (count($patient)) {
                 $placeholders = $patient[0];
+                $content =  str_replace("[comment]", $comment, $content);
                 $content =  str_replace("[patient firstname]", $placeholders->firstName, $content);
                 $content =  str_replace("[patient lastname]", $placeholders->lastName, $content);
                 $content =  str_replace("[patient birthday]", $this->formate_date($placeholders->birthday), $content);
                 $content =  str_replace("[patient insurance]", $placeholders->insurance, $content);
                 $content =  str_replace("[patient address]", $placeholders->streetNr, $content);
                 $content =  str_replace("[patient phone]", $placeholders->phone1, $content);              
-                $content =  str_replace("[oder_id]", $ret->orderId, $content);
-                $content =  str_replace("[order_duedate]", $this->formate_date($ret->date), $content);
-                $content =  str_replace("[order_public_link]", $public_link, $content);
-
+                $content =  str_replace("[oder_id]", $orderId, $content); 
 
                 if ($placeholders->instance_id == '0') {
                     $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE '0'");
@@ -444,8 +443,11 @@ class OrdersController extends Controller
                 }
             }
             $title =  $emailTrigger->title;
-            $title =  str_replace("[order_id]", $ret->orderId,  $title);
+            $title =  str_replace("[order_id]", $orderId,  $title);
+          
+        
             $this->sendMail($title, $content, $users, $email, $name);
+
         }
 
 

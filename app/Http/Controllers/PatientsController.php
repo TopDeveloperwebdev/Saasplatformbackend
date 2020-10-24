@@ -78,14 +78,139 @@ class PatientsController extends Controller
             $file->move($destinationPath, $filename);
             $data->picture = url('/') . '/file_storage/' . $filename;
         }
-
+         
         $Array = json_decode(json_encode($data), true);
-        return Patient::create($Array);
+        $patient = Patient::create($Array);
+         $this->Notification($patient);
+        return $patient;
     }
 
+   public function Notification($patient){
+    $TriggerType = 'Neuer Patient';      
+  
+    $instance_id = $patient->instance_id;
+    $patientId = $patient->id;
+    
+    $emailTriggerTemp = DB::select("SELECT * FROM `triggers` AS t1 LEFT JOIN emailtemplates AS t2 ON t1.template LIKE t2.title WHERE t1.instance_id LIKE '$instance_id' AND t1.TYPE LIKE '$TriggerType'");
+   
+  
+    if (count($emailTriggerTemp)) {
+        $users = [];
+        $emailTrigger = $emailTriggerTemp[0];
+        
+        $usergroup = json_decode($emailTrigger->usergroup);         
+       
+        if (in_array("Patients", $usergroup) && $patient) {
+            if($patient->email && $patient->serviceplan) {
+                array_push($users, $patient->email);
+            }
+            if (in_array("Care managers", $usergroup)) {   
+                $caremanager = $patient->caremanager;        
+                $caremanagers = DB::select("SELECT * from `caremanagers` where id like $caremanager");
+                if (count($caremanagers)) {
+                    if ($caremanagers[0]->email && $caremanagers[0]->notifications) {
+                        array_push($users, $caremanagers[0]->email);
+                    }
+                }
+            }
+            if (in_array("Pharmacies", $usergroup)) {
+                $pharmacyname = $patient->pharmacy;
+                $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$pharmacyname'");
+                if (count($pharmacy)) {
+                    if ($pharmacy[0]->email && $pharmacy[0]->notifications) {
+                        array_push($users, $pharmacy[0]->email);
+                    }
+                }
+            }
+            if (in_array("Family doctors", $usergroup)) {
+                $doctorName =  $patient->familyDoctor;
+                $family_doctors = DB::select("SELECT * from `family_doctors` where doctorName like '$doctorName'");
+                if (count($family_doctors)) {
+                    if ($family_doctors[0]->email && $family_doctors[0]->notifications) {
+                        array_push($users, $family_doctors[0]->email);
+                    }
+                }
+            }
+          
+            $instance_users = [];
+            if (in_array("Related Users", $usergroup) && count($patient)) {
+                $usergroup =  json_decode($patient->userGroup);  
+                if(count($usergroup)){
+                    if($usergroup[0] == 'all'){
+                        $instance_users = DB::select("SELECT email from `app_user` where instance_id not like 0");                        
+                    }
+                    else {
+                        $instance_users = DB::table('app_user')->whereIn('name', $usergroup)->get();
+                    }
+                }             
+            }
+            if(count($instance_users)){
+               foreach ($instance_users as $instance_user) {
+                array_push($users, $instance_user->email);
+               }
+            }
+        }
+       
+     
+        $content = $emailTrigger->body;        
+        $email = 'mail@base.care';
+        $name = "base.care";
 
+        if (count($patient)) {
+            $placeholders = $patient;  
+            $content =  str_replace("[patient firstname]", $placeholders->firstName, $content);
+            $content =  str_replace("[patient lastname]", $placeholders->lastName, $content);
+            $content =  str_replace("[patient birthday]", $this->formate_date($placeholders->birthday), $content);
+            $content =  str_replace("[patient insurance]", $placeholders->insurance, $content);
+            $content =  str_replace("[patient address]", $placeholders->streetNr, $content);
+            $content =  str_replace("[patient phone]", $placeholders->phone1, $content);           
+    
 
+            if ($placeholders->instance_id == '0') {
+                $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE '0'");
+                $email = $instanceEmail[0]->email;
+                $name = "base.care";
+            } else {
+                $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE $placeholders->instance_id AND isOwner LIKE 1");
+                $instanceName = DB::select("SELECT instanceName FROM instances WHERE id LIKE $placeholders->instance_id ");
+                if (count($instanceEmail)) $email = $instanceEmail[0]->email;
+                if (count($instanceName)) $name = $instanceName[0]->instanceName;
+            }
+        }
+        $title =  $emailTrigger->title;      
+    
+        $this->sendMail($title, $content, $users, $email, $name);
 
+    }
+   }
+
+   public function sendMail($title, $body, $users, $instanceEmail , $name)
+   {
+       $message = new Message();
+       $message->title = $title;
+       $message->body = $body;
+       $message->receivers  = json_encode($users);
+       $message->delivered = 'YES';
+       $message->send_date = Carbon::now();
+       $message->save();
+
+       foreach ($users as $user) {
+           dispatch(new SendMailJob($user, new NewArrivals($title, $body, $instanceEmail , $name)));
+       }
+
+       return response()->json('Mail sent.', 201);
+   }
+   public function formate_date($dateString)
+    {
+        $date = '';
+
+        if ($dateString) {
+            $date = explode('-', $dateString);
+            $dateStr = $date[2] . '.' . $date[1] . '.' . $date[0];
+        }
+
+        return $dateStr;
+    }
     /**
      * Update the specified resource in storage.
      *

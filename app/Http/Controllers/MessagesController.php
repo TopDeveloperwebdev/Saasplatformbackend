@@ -138,6 +138,7 @@ class MessagesController extends Controller
     {
         $data = $request->all();
         return Trigger::create($data);
+       
     }
     public function updateTrigger(Request $request)
     {
