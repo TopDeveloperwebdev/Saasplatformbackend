@@ -20,6 +20,9 @@ class Caremanagers extends Migration
             $table->string('klinik')->nullable();          
             $table->string('fax')->nullable();
             $table->string('email')->nullable();        
+             $table->string('salutation')->nullable();
+            $table->string('firstName')->nullable(); 
+            $table->string('lastName')->nullable();   
             $table->boolean('notifications')->default(0);      
             $table->timestamps();
         });    	

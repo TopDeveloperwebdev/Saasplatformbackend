@@ -236,7 +236,7 @@ class OrdersController extends Controller
     public function formate_date($dateString)
     {
         $date = '';
-
+        $dateStr = '';
         if ($dateString) {
             $date = explode('-', $dateString);
             $dateStr = $date[2] . '.' . $date[1] . '.' . $date[0];
@@ -348,109 +348,102 @@ class OrdersController extends Controller
     {
         $data = $request->all();
         $TriggerType = 'Kommentar für Bestellung';      
-        $orderId = $request->get('orderId');
+    
         $comment = $request->get('comment');
+        $orderId = $request->get('orderId');
         $orderTemp = DB::select("SELECT * FROM `orders` WHERE `orderId` LIKE '$orderId'" );
         $instance_id = $orderTemp[0]->instance_id;
         $patientId = $orderTemp[0]->patient;
-        
-        $emailTriggerTemp = DB::select("SELECT * FROM `triggers` AS t1 LEFT JOIN emailtemplates AS t2 ON t1.template LIKE t2.title WHERE t1.instance_id LIKE '$instance_id' AND t1.TYPE LIKE '$TriggerType'");
-       
-      
-        if (count($emailTriggerTemp)) {
-            $users = [];
-            $emailTrigger = $emailTriggerTemp[0];
-            
-            $usergroup = json_decode($emailTrigger->usergroup); 
-          
-            $patient = DB::select("SELECT * from `patients` where id like '$patientId'");
-            if (in_array("Patients", $usergroup) && count($patient)) {
-                if ($patient[0]->email && $patient[0]->serviceplan) {
-                    array_push($users, $patient[0]->email);
-                }
-                if (in_array("Care managers", $usergroup)) {   
-                    $caremanager = $patient[0]->caremanager;        
+        $patientTemp = DB::select("SELECT * from `patients` where id like '$patientId'");
+        if(count($patientTemp)){
+            $patient = $patientTemp[0];
+            $emailTriggerTemp = DB::select("SELECT * FROM `triggers` AS t1 LEFT JOIN emailtemplates AS t2 ON t1.template LIKE t2.title WHERE t1.instance_id LIKE '$instance_id' AND t1.TYPE LIKE '$TriggerType'");
+    
+            if (count($emailTriggerTemp)) {
+                $users = [];
+                $emailTrigger = $emailTriggerTemp[0];
+                $content = $emailTrigger->body;        
+                $email = 'mail@base.care';
+                $name = "base.care";
+                $usergroup = json_decode($emailTrigger->usergroup);         
+                $family_doctorInfo = '';
+                $pharmacyInfo = '';
+                $caremanagerInfo='';
+                if ($patient) {
+                    if($patient->email && $patient->serviceplan && in_array("Patients", $usergroup))  {
+                        array_push($users, $patient->email);
+                    }
+                    
+                    $caremanager = $patient->caremanager;        
                     $caremanagers = DB::select("SELECT * from `caremanagers` where id like $caremanager");
-                    if (count($caremanagers)) {
+                    if (in_array("Care managers", $usergroup) && count($caremanagers))  {  
+                        $caremanagerInfo = $caremanagers[0]->firstName.' '.$caremanagers[0]->lastName.' '.$caremanagers[0]->phone.' '.$caremanagers[0]->fax;  
                         if ($caremanagers[0]->email && $caremanagers[0]->notifications) {
                             array_push($users, $caremanagers[0]->email);
                         }
                     }
-                }
-                if (in_array("Pharmacies", $usergroup)) {
-                    $pharmacyname = $patient[0]->pharmacy;
+                    $pharmacyname = $patient->pharmacy;
                     $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$pharmacyname'");
-                    if (count($pharmacy)) {
+                    if (in_array("Pharmacies", $usergroup) && count($pharmacy)) {
+                        $pharmacyInfo = $pharmacy[0]->pharmacyName.' '.$pharmacy[0]->streetNr.' '.$pharmacy[0]->zipcode.' '.$pharmacy[0]->city.' '.$pharmacy[0]->phone.' '.$pharmacy[0]->fax; 
                         if ($pharmacy[0]->email && $pharmacy[0]->notifications) {
                             array_push($users, $pharmacy[0]->email);
                         }
                     }
-                }
-                if (in_array("Family doctors", $usergroup)) {
-                    $doctorName =  $patient[0]->familyDoctor;
+                    $doctorName =  $patient->familyDoctor;
                     $family_doctors = DB::select("SELECT * from `family_doctors` where doctorName like '$doctorName'");
-                    if (count($family_doctors)) {
+                    if (in_array("Family doctors", $usergroup) && count($family_doctors)) {   
+                        $family_doctorInfo = $family_doctors[0]->doctorName.' '.$family_doctors[0]->streetNr.' '.$family_doctors[0]->zipcode.' '.$family_doctors[0]->city.' '.$family_doctors[0]->phone.' '.$family_doctors[0]->fax;           
                         if ($family_doctors[0]->email && $family_doctors[0]->notifications) {
                             array_push($users, $family_doctors[0]->email);
                         }
                     }
-                }
-              
-                $instance_users = [];
-                if (in_array("Related Users", $usergroup) && count($patient)) {
-                    $usergroup =  json_decode($patient[0]->userGroup);  
-                    if(count($usergroup)){
+                  
+                    $instance_users = [];
+                    $usergroup =  json_decode($patient->userGroup);  
+                    if (in_array("Related Users", $usergroup) && count($usergroup)) {
                         if($usergroup[0] == 'all'){
                             $instance_users = DB::select("SELECT email from `app_user` where instance_id not like 0");                        
                         }
                         else {
                             $instance_users = DB::table('app_user')->whereIn('name', $usergroup)->get();
-                        }
-                    }             
-                }
-                if(count($instance_users)){
-                   foreach ($instance_users as $instance_user) {
-                    array_push($users, $instance_user->email);
-                   }
-                }
-            }
-           
-         
-            $content = $emailTrigger->body;        
-            $email = 'mail@base.care';
-            $name = "base.care";
-
-            if (count($patient)) {
-                $placeholders = $patient[0];
-                $content =  str_replace("[comment]", $comment, $content);
-                $content =  str_replace("[patient firstname]", $placeholders->firstName, $content);
-                $content =  str_replace("[patient lastname]", $placeholders->lastName, $content);
-                $content =  str_replace("[patient birthday]", $this->formate_date($placeholders->birthday), $content);
-                $content =  str_replace("[patient insurance]", $placeholders->insurance, $content);
-                $content =  str_replace("[patient address]", $placeholders->streetNr, $content);
-                $content =  str_replace("[patient phone]", $placeholders->phone1, $content);              
-                $content =  str_replace("[oder_id]", $orderId, $content); 
-
-                if ($placeholders->instance_id == '0') {
-                    $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE '0'");
-                    $email = $instanceEmail[0]->email;
-                    $name = "base.care";
-                } else {
-                    $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE $placeholders->instance_id AND isOwner LIKE 1");
-                    $instanceName = DB::select("SELECT instanceName FROM instances WHERE id LIKE $placeholders->instance_id ");
-                    if (count($instanceEmail)) $email = $instanceEmail[0]->email;
-                    if (count($instanceName)) $name = $instanceName[0]->instanceName;
-                }
-            }
-            $title =  $emailTrigger->title;
-            $title =  str_replace("[order_id]", $orderId,  $title);
-          
+                        }     
+                    }
+                    if(count($instance_users)){
+                       foreach ($instance_users as $instance_user) {
+                        array_push($users, $instance_user->email);
+                       }
+                    }
+                    $placeholders = $patient;  
+                    $content =  str_replace("[comment]", $comment, $content);
+                    $content =  str_replace("[patient]", $placeholders->firstName.' '.$placeholders->lastName, $content);
+                    $content =  str_replace("[address]", $placeholders->streetNr .' '.$placeholders->zipCode.' '.$placeholders->city, $content);
+                    $content =  str_replace("[phone]", $placeholders->phone1, $content);  
+                    $content =  str_replace("[birthday]", $this->formate_date($placeholders->birthday), $content);
+                    $content =  str_replace("[insurance]", $placeholders->insurance, $content);
+                    $content =  str_replace("[insuranceNr]", $placeholders->insuranceNr, $content); 
+                    $content =  str_replace("[family doctor]", $family_doctorInfo, $content); 
+                    $content =  str_replace("[pharmacy]", $pharmacyInfo, $content); 
+                    $content =  str_replace("[care manager]", $caremanagerInfo, $content); 
+                
+                    if ($placeholders->instance_id == '0') {
+                        $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE '0'");
+                        $email = $instanceEmail[0]->email;
+                        $name = "base.care";
+                    } else {
+                        $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE $placeholders->instance_id AND isOwner LIKE 1");
+                        $instanceName = DB::select("SELECT instanceName FROM instances WHERE id LIKE $placeholders->instance_id ");
+                        if (count($instanceEmail)) $email = $instanceEmail[0]->email;
+                        if (count($instanceName)) $name = $instanceName[0]->instanceName;
+                    }
+                }   
+               
+                $title =  $emailTrigger->title;      
+              
+                $this->sendMail($title, $content, $users, $email, $name);
         
-            $this->sendMail($title, $content, $users, $email, $name);
-
-        }
-
-
+            }
+        }  
         return Comment::create($data);
     }
 

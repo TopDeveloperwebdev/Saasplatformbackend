@@ -39,6 +39,7 @@ Route::post('addCaremanagers', 'CaremanagerController@store')->name('addCaremana
 Route::post('showCaremanagers', 'CaremanagerController@index')->name('showCaremanager');
 Route::post('editCaremanagers', 'CaremanagerController@update')->name('editCaremanager');
 Route::post('deleteCaremanagers', 'CaremanagerController@destroy')->name('deleteCaremanagers');
+
 //  Patients
 Route::post('addPharmacies', 'PharmaciesController@store')->name('addPharmacies');
 Route::post('showPharmacies', 'PharmaciesController@index')->name('showPharmacies');
@@ -50,7 +51,7 @@ Route::post('addPatients', 'PatientsController@store')->name('addPatients');
 Route::post('showPatients', 'PatientsController@index')->name('showPatients');
 Route::post('editPatients', 'PatientsController@update')->name('editPatients');
 Route::post('deletePatients', 'PatientsController@destroy')->name('deletePatients');
-
+Route::post('getPatients', 'PatientsController@getPatients')->name('getPatients');
 //  MedicationsController
 Route::post('addMedications', 'MedicationsController@store')->name('addMedications');
 Route::post('showMedications', 'MedicationsController@index')->name('showMedications');
