@@ -41,6 +41,7 @@ class Patients extends Migration
             $table->string('status')->default(0);
             $table->integer('instance_id')->default(0);
             $table->boolean('serviceplan')->default(0);
+             $table->string('note')->nullable();
             $table->timestamps();
         });
     }

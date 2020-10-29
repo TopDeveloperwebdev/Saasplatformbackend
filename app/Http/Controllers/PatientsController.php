@@ -47,7 +47,7 @@ class PatientsController extends Controller
         $documents = DB::select("SELECT * FROM documents");
 
         $folders = DB::select("SELECT * from `carefolders` where instance_id like $instance_id order by id DESC");
-        $caremanagers = DB::select("SELECT * from `caremanagers` order by ansprechpartner DESC");
+        $caremanagers = DB::select("SELECT * from `caremanagers`");
         $ret = array(
             "patients" => $patients,
             "services" => $services,
@@ -88,8 +88,8 @@ class PatientsController extends Controller
          
         $Array = json_decode(json_encode($data), true);
         $patient = Patient::create($Array);
-        $this->Notification($patient);
-       return $patient;
+       $this->Notification($patient);
+      return $patient;
     }
 
    public function Notification($patient){
@@ -112,14 +112,20 @@ class PatientsController extends Controller
         $pharmacyInfo = '';
         $caremanagerInfo='';
         $title =  $emailTrigger->title;  
-        if (in_array("Patients", $usergroup) && $patient &&  $title) {
-            if($patient->email && $patient->serviceplan) {
+       
+        if ($patient &&  $title) {
+            if($patient->email && $patient->serviceplan && in_array("Patients", $usergroup)) {
                 array_push($users, $patient->email);
             }
             $caremanager = $patient->caremanager;        
             $caremanagers = DB::select("SELECT * from `caremanagers` where id like $caremanager");
             if (in_array("Care managers", $usergroup) && count($caremanagers))  {  
-                $caremanagerInfo = $caremanagers[0]->firstName.' '.$caremanagers[0]->lastName.' '.$caremanagers[0]->phone.' '.$caremanagers[0]->fax;  
+                $caremanagerInfo =  "<div style='margin-bottom : 30px'>" . $caremanagers[0]->firstName . "</p><p>" . $caremanagers[0]->lastName . "</p><p>Tel.: " . $caremanagers[0]->phone . "</p><p>Fax: " . $caremanagers[0]->fax . "</p></div>";
+                $content =  str_replace("[care manager anrede]",$caremanagers[0]->salutation, $content); 
+                $content =  str_replace('[care manager firstname]',$caremanagers[0]->firstName, $content); 
+                $content =  str_replace('[care manager lastname]',$caremanagers[0]->lastName, $content); 
+                $content =  str_replace('[care manager phone]','Tel.: '.$caremanagers[0]->phone, $content); 
+                $content =  str_replace('[care manager email]','E-Mail.: '.$caremanagers[0]->email, $content);                 
                 if ($caremanagers[0]->email && $caremanagers[0]->notifications) {
                     array_push($users, $caremanagers[0]->email);
                 }
@@ -127,7 +133,12 @@ class PatientsController extends Controller
             $pharmacyname = $patient->pharmacy;
             $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$pharmacyname'");
             if (in_array("Pharmacies", $usergroup) && count($pharmacy)) {
-                $pharmacyInfo = $pharmacy[0]->pharmacyName.' '.$pharmacy[0]->streetNr.' '.$pharmacy[0]->zipcode.' '.$pharmacy[0]->city.' '.$pharmacy[0]->phone.' '.$pharmacy[0]->fax; 
+             
+                $pharmacyInfo =  "<div style='margin-bottom : 30px'><p>" . $pharmacy[0]->pharmacyName  . "</p>";
+                $pharmacyInfo = $pharmacyInfo . "<p>" . $pharmacy[0]->streetNr . "</p>";
+                $pharmacyInfo = $pharmacyInfo . "<p>" . $pharmacy[0]->zipcode . $pharmacy[0]->city .  "</p>";  
+                $pharmacyInfo = $pharmacyInfo .  "<p>Tel.: " . $pharmacy[0]->phone . "</p>";
+                $pharmacyInfo = $pharmacyInfo . "<p>Fax. " . $pharmacy[0]->fax . "</p></div>";
                 if ($pharmacy[0]->email && $pharmacy[0]->notifications) {
                     array_push($users, $pharmacy[0]->email);
                 }
@@ -135,7 +146,12 @@ class PatientsController extends Controller
             $doctorName =  $patient->familyDoctor;
             $family_doctors = DB::select("SELECT * from `family_doctors` where doctorName like '$doctorName'");
             if (in_array("Family doctors", $usergroup) && count($family_doctors)) {   
-                $family_doctorInfo = $family_doctors[0]->doctorName.' '.$family_doctors[0]->streetNr.' '.$family_doctors[0]->zipcode.' '.$family_doctors[0]->city.' '.$family_doctors[0]->phone.' '.$family_doctors[0]->fax;           
+                $family_doctorInfo =  "<div style='margin-bottom : 30px'><p>" . $family_doctors[0]->doctorName  . "</p>";                       
+                $family_doctorInfo = $family_doctorInfo . "<p>" . $family_doctors[0]->streetNr . "</p>";
+                $family_doctorInfo = $family_doctorInfo .  "<p>" . $family_doctors[0]->zipcode . $family_doctors[0]->city ."</p>";   
+                $family_doctorInfo = $family_doctorInfo .  "<p>Tel.: " . $family_doctors[0]->phone . "</p>";
+                $family_doctorInfo = $family_doctorInfo .  "<p>Fax: " . $family_doctors[0]->fax . "</p></div>";
+             
                 if ($family_doctors[0]->email && $family_doctors[0]->notifications) {
                     array_push($users, $family_doctors[0]->email);
                 }
@@ -178,6 +194,7 @@ class PatientsController extends Controller
                 if (count($instanceEmail)) $email = $instanceEmail[0]->email;
                 if (count($instanceName)) $name = $instanceName[0]->instanceName;
             } 
+     
              $this->sendMail($title, $content, $users, $email, $name);
         }    
     }
@@ -214,11 +231,12 @@ class PatientsController extends Controller
 
        return $patients;
    }
+   
 
    public function formate_date($dateString)
     {
         $date = '';
-
+        $dateStr = '';
         if ($dateString) {
             $date = explode('-', $dateString);
             $dateStr = $date[2] . '.' . $date[1] . '.' . $date[0];
@@ -252,6 +270,13 @@ class PatientsController extends Controller
 
         Patient::whereId($Array['id'])->update($Array);
         return $Array;
+    }
+       public function editStatus(Request $request)
+    {
+        
+        $data = $request->all();
+        
+        return Patient::whereId($request->get('id'))->update($data);
     }
 
     /**

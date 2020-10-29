@@ -40,6 +40,12 @@ Route::post('showCaremanagers', 'CaremanagerController@index')->name('showCarema
 Route::post('editCaremanagers', 'CaremanagerController@update')->name('editCaremanager');
 Route::post('deleteCaremanagers', 'CaremanagerController@destroy')->name('deleteCaremanagers');
 
+// Ausgaben
+Route::post('addAusgaben', 'AusgabenController@store')->name('addAusgaben');
+Route::post('showAusgaben', 'AusgabenController@index')->name('showAusgaben');
+Route::post('editAusgaben', 'AusgabenController@update')->name('editAusgaben');
+Route::post('deleteAusgaben', 'AusgabenController@destroy')->name('deleteAusgaben');
+
 //  Patients
 Route::post('addPharmacies', 'PharmaciesController@store')->name('addPharmacies');
 Route::post('showPharmacies', 'PharmaciesController@index')->name('showPharmacies');
@@ -52,6 +58,7 @@ Route::post('showPatients', 'PatientsController@index')->name('showPatients');
 Route::post('editPatients', 'PatientsController@update')->name('editPatients');
 Route::post('deletePatients', 'PatientsController@destroy')->name('deletePatients');
 Route::post('getPatients', 'PatientsController@getPatients')->name('getPatients');
+Route::post('editStatus', 'PatientsController@editStatus')->name('editStatus');
 //  MedicationsController
 Route::post('addMedications', 'MedicationsController@store')->name('addMedications');
 Route::post('showMedications', 'MedicationsController@index')->name('showMedications');
@@ -111,6 +118,7 @@ Route::post('getOrderDetail', 'OrdersController@getDetail')->name('getOrderDetai
 Route::post('editOrders', 'OrdersController@update')->name('editOrders');
 Route::post('deleteOrders', 'OrdersController@destroy')->name('deleteOrders');
 Route::post('submitComment', 'OrdersController@submit')->name('submitComment');
+Route::post('getOrdersByUserId', 'OrdersController@getOrdersByUserId')->name('getOrdersByUserId');
 
 //  UsersController
 Route::post('addUsers', 'PagesController@store')->name('addUsers');

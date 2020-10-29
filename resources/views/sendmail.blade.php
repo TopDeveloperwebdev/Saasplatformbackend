@@ -7,9 +7,14 @@
  
     <meta name="viewport" content="width=device-width, initial-scale=1">  
     <style>
-        p , div {
-            margin-bottom: 0px !important;           
-        }
+    @media (min-width: 1020px)
+    {  
+        p {
+                margin-bottom: 0px !important;  
+                line-height : 1.2 !important;         
+            }
+    }
+      
     </style>
 
 </head>

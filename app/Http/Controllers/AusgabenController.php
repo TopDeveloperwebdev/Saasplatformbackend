@@ -3,11 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Caremanager;
+use App\ausgaben;
 use Auth;
 use Illuminate\Support\Facades\DB;
 
-class CaremanagerController extends Controller
+class AusgabenController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -17,7 +17,7 @@ class CaremanagerController extends Controller
     public function index(Request $request)
     {
         $data = $request->all();
-        $res = DB::select("SELECT * from `caremanagers`");
+        $res = DB::select("SELECT * from `ausgaben` ");
         return $res;
     }
 
@@ -31,7 +31,7 @@ class CaremanagerController extends Controller
     {
 
         $data = $request->all();
-        return Caremanager::create($data);
+        return ausgaben::create($data);
     }
 
     /**
@@ -56,7 +56,7 @@ class CaremanagerController extends Controller
     {
         $data = $request->all();
 
-        return Caremanager::whereId($request->get('id'))->update($data);
+        return ausgaben::whereId($request->get('id'))->update($data);
     }
 
     /**
@@ -67,7 +67,7 @@ class CaremanagerController extends Controller
      */
     public function destroy(Request $request)
     { 
-         $res=Caremanager::where('id',$request->get('id'))->delete();   
+         $res=ausgaben::where('id',$request->get('id'))->delete();   
          return $res;    
     }
 

@@ -47,6 +47,19 @@ class OrdersController extends Controller
         );
         return $ret;
     }
+     public function getOrdersByUserId(Request $request)
+    {
+        $user_id = $request->get('user_id');
+        $instance_id =$request->get('instance_id');
+          
+        if ($instance_id == 0) { 
+            $orders = DB::select("SELECT * FROM orders");
+        } else {
+            $orders = DB::select("SELECT * FROM orders  WHERE user_id like $instance_id ");
+        }
+       
+        return  $orders;
+    } 
     public function getDetail(Request $request)
     {
         $orderId = $request->get('orderId');
@@ -195,7 +208,8 @@ class OrdersController extends Controller
             }
         
             $content = $emailTrigger->body;
-            $href = 'http://base.mastermedi-1.vautronserver.de/order-detail/' . $ret->orderId;
+
+            $href = 'https://base.care/order-detail/' . $ret->orderId;
             $public_link = "<a href=" . $href . ">" . $ret->orderId . "</a>";
             $email = 'mail@base.care';
             $name = "base.care";
@@ -368,7 +382,7 @@ class OrdersController extends Controller
                 $usergroup = json_decode($emailTrigger->usergroup);         
                 $family_doctorInfo = '';
                 $pharmacyInfo = '';
-                $caremanagerInfo='';
+                $caremanagerInfo = '';
                 if ($patient) {
                     if($patient->email && $patient->serviceplan && in_array("Patients", $usergroup))  {
                         array_push($users, $patient->email);
@@ -376,8 +390,9 @@ class OrdersController extends Controller
                     
                     $caremanager = $patient->caremanager;        
                     $caremanagers = DB::select("SELECT * from `caremanagers` where id like $caremanager");
-                    if (in_array("Care managers", $usergroup) && count($caremanagers))  {  
-                        $caremanagerInfo = $caremanagers[0]->firstName.' '.$caremanagers[0]->lastName.' '.$caremanagers[0]->phone.' '.$caremanagers[0]->fax;  
+                    if (in_array("Care managers", $usergroup) && count($caremanagers))  {                          
+                        $caremanagerInfo =  "<div style='margin-bottom : 30px'><p>" . $caremanagers[0]->firstName . "</p><p>" . $caremanagers[0]->lastName . "</p><p>Tel.: " . $caremanagers[0]->phone . "</p><p>Fax: " . $caremanagers[0]->fax . "</p></div>";
+                       
                         if ($caremanagers[0]->email && $caremanagers[0]->notifications) {
                             array_push($users, $caremanagers[0]->email);
                         }
@@ -385,15 +400,26 @@ class OrdersController extends Controller
                     $pharmacyname = $patient->pharmacy;
                     $pharmacy = DB::select("SELECT * from `pharmacies` where pharmacyName like '$pharmacyname'");
                     if (in_array("Pharmacies", $usergroup) && count($pharmacy)) {
-                        $pharmacyInfo = $pharmacy[0]->pharmacyName.' '.$pharmacy[0]->streetNr.' '.$pharmacy[0]->zipcode.' '.$pharmacy[0]->city.' '.$pharmacy[0]->phone.' '.$pharmacy[0]->fax; 
+                      
+                        $pharmacyInfo =  "<div style='margin-bottom : 30px'><p>" . $pharmacy[0]->pharmacyName  . "</p>";
+                        $pharmacyInfo = $pharmacyInfo . "<p>" . $pharmacy[0]->streetNr . "</p>";
+                        $pharmacyInfo = $pharmacyInfo . "<p>" . $pharmacy[0]->zipcode .$pharmacy[0]->city . "</p>";                
+                
+                        $pharmacyInfo = $pharmacyInfo .  "<p>Tel.: " . $pharmacy[0]->phone . "</p>";
+                        $pharmacyInfo = $pharmacyInfo . "<p>Fax. " . $pharmacy[0]->fax . "</p></div>";
                         if ($pharmacy[0]->email && $pharmacy[0]->notifications) {
                             array_push($users, $pharmacy[0]->email);
                         }
                     }
                     $doctorName =  $patient->familyDoctor;
                     $family_doctors = DB::select("SELECT * from `family_doctors` where doctorName like '$doctorName'");
-                    if (in_array("Family doctors", $usergroup) && count($family_doctors)) {   
-                        $family_doctorInfo = $family_doctors[0]->doctorName.' '.$family_doctors[0]->streetNr.' '.$family_doctors[0]->zipcode.' '.$family_doctors[0]->city.' '.$family_doctors[0]->phone.' '.$family_doctors[0]->fax;           
+                    if (in_array("Family doctors", $usergroup) && count($family_doctors)) {                     
+                        
+                        $family_doctorInfo =  "<div style='margin-bottom : 30px'><p>" . $family_doctors[0]->doctorName  . "</p>";                       
+                        $family_doctorInfo = $family_doctorInfo . "<p>" . $family_doctors[0]->streetNr . "</p>";
+                        $family_doctorInfo = $family_doctorInfo .  "<p>" . $family_doctors[0]->zipcode . $family_doctors[0]->city ."</p>";   
+                        $family_doctorInfo = $family_doctorInfo .  "<p>Tel.: " . $family_doctors[0]->phone . "</p>";
+                        $family_doctorInfo = $family_doctorInfo .  "<p>Fax: " . $family_doctors[0]->fax . "</p></div>";
                         if ($family_doctors[0]->email && $family_doctors[0]->notifications) {
                             array_push($users, $family_doctors[0]->email);
                         }
@@ -414,6 +440,8 @@ class OrdersController extends Controller
                         array_push($users, $instance_user->email);
                        }
                     }
+                    $href = 'https://base.care/order-detail/' . $orderId;
+                    $public_link = "<a href=" . $href . ">" . $orderId . "</a>";
                     $placeholders = $patient;  
                     $content =  str_replace("[comment]", $comment, $content);
                     $content =  str_replace("[patient]", $placeholders->firstName.' '.$placeholders->lastName, $content);
@@ -425,7 +453,8 @@ class OrdersController extends Controller
                     $content =  str_replace("[family doctor]", $family_doctorInfo, $content); 
                     $content =  str_replace("[pharmacy]", $pharmacyInfo, $content); 
                     $content =  str_replace("[care manager]", $caremanagerInfo, $content); 
-                
+                    $content =  str_replace("[oder_id]", $orderId, $content); 
+                    $content =  str_replace("[order_public_link]", $public_link, $content); 
                     if ($placeholders->instance_id == '0') {
                         $instanceEmail = DB::select("SELECT email FROM app_user WHERE instance_id LIKE '0'");
                         $email = $instanceEmail[0]->email;
@@ -438,8 +467,8 @@ class OrdersController extends Controller
                     }
                 }   
                
-                $title =  $emailTrigger->title;      
-              
+                $title =  $emailTrigger->title;   
+                $title =  str_replace("[oder_id]", $orderId, $title); 
                 $this->sendMail($title, $content, $users, $email, $name);
         
             }

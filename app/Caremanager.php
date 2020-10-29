@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Caremanager extends Model
 {
     //
-    protected $fillable = ['ansprechpartner','klinik','fax','email', 'notifications','salutation', 'firstName', 'lastName'];
+    protected $fillable = ['phone','klinik','fax','email', 'notifications','salutation', 'firstName', 'lastName'];
     
     protected $table = 'caremanagers';
 }
