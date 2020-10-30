@@ -51,14 +51,47 @@ class OrdersController extends Controller
     {
         $user_id = $request->get('user_id');
         $instance_id =$request->get('instance_id');
-          
+
+
         if ($instance_id == 0) { 
-            $orders = DB::select("SELECT * FROM orders");
+            $orders = DB::select("SELECT * FROM orders ");
         } else {
             $orders = DB::select("SELECT * FROM orders  WHERE user_id like $instance_id ");
         }
+      
+        $orderDetails = [];
+       foreach($orders as $key => $order){     
+         $orderDetail['orderId'] = $order->orderId;
+         $orderDetail['orderNote'] = $order->note; 
+         $orderDetail['date'] = $order->created_at;               
+         $patientTemp = DB::select("SELECT * from `patients` where id like '$order->patient'");
+         
+         $orderDetail['patient'] = [];
+         
+         if(count($patientTemp))$orderDetail['patient'] =$patientTemp[0];
+
+       $doctorTemp = DB::select("SELECT * from `family_doctors` where doctorName like '$order->doctor'");
+       $orderDetail['doctor'] = [];
+       if(count($doctorTemp))$orderDetail['doctor'] =$doctorTemp[0];
+
+       $pharmacyTemp = DB::select("SELECT * from `pharmacies` where pharmacyName like '$order->pharmacy'");
+       $orderDetail['pharmacy'] = [];
+       if(count($pharmacyTemp))$orderDetail['pharmacy'] =$pharmacyTemp[0];
        
-        return  $orders;
+       $userTemp = DB::select("SELECT name , id , userAvatar from `app_user` where id like '$order->user_id'");
+       $orderDetail['user'] = [];
+       if(count($userTemp))$orderDetail['user'] =$userTemp[0];
+
+       $userTemp =  DB::select("SELECT * from `instances` where id like '$order->instance_id'");
+       $orderDetail['instance'] = [];
+       if(count($userTemp)) $orderDetail['instance']=$userTemp[0];
+         $orderMedications = json_decode($order->orderMedications);
+         $orderDetail['Medications'] = DB::table('medications')->whereIn('medicationName', $orderMedications)->get();
+         $orderDetail['commentList'] = DB::select("SELECT * from `comments` where orderId like '$order->orderId'");
+         array_push($orderDetails, $orderDetail);
+       }
+      
+        return $orderDetails;
     } 
     public function getDetail(Request $request)
     {
@@ -469,7 +502,7 @@ class OrdersController extends Controller
                
                 $title =  $emailTrigger->title;   
                 $title =  str_replace("[oder_id]", $orderId, $title); 
-                $this->sendMail($title, $content, $users, $email, $name);
+               // $this->sendMail($title, $content, $users, $email, $name);
         
             }
         }  

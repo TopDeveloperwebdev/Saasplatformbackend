@@ -175,6 +175,7 @@ class PatientsController extends Controller
             $placeholders = $patient;  
             
             $content =  str_replace("[patient]", $placeholders->firstName.' '.$placeholders->lastName, $content);
+             $content =  str_replace("[patient notes]", $placeholders->note, $content);
             $content =  str_replace("[address]", $placeholders->streetNr .' '.$placeholders->zipCode.' '.$placeholders->city, $content);
             $content =  str_replace("[phone]", $placeholders->phone1, $content);  
             $content =  str_replace("[birthday]", $this->formate_date($placeholders->birthday), $content);
