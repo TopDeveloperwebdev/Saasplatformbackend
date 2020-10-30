@@ -19,6 +19,7 @@ class Comments extends Migration
             $table->string('orderId')->nullable();           
             $table->string('user_id')->nullable();
              $table->string('comment')->nullable();
+              $table->string('patient_id')->nullable();
             $table->timestamps();
         });
     }

@@ -118,6 +118,7 @@ Route::post('getOrderDetail', 'OrdersController@getDetail')->name('getOrderDetai
 Route::post('editOrders', 'OrdersController@update')->name('editOrders');
 Route::post('deleteOrders', 'OrdersController@destroy')->name('deleteOrders');
 Route::post('submitComment', 'OrdersController@submit')->name('submitComment');
+Route::post('addComment', 'OrdersController@addComment')->name('addComment');
 Route::post('getOrdersByUserId', 'OrdersController@getOrdersByUserId')->name('getOrdersByUserId');
 
 //  UsersController

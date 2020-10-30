@@ -54,44 +54,56 @@ class OrdersController extends Controller
 
 
         if ($instance_id == 0) { 
-            $orders = DB::select("SELECT * FROM orders ");
+            $patients = DB::select("SELECT * FROM patients ");
         } else {
-            $orders = DB::select("SELECT * FROM orders  WHERE user_id like $instance_id ");
+            $patients = DB::select("SELECT * FROM patients  WHERE instance_id like $instance_id ");
         }
       
+       $patientsDetail = [];
+      foreach($patients as $key => $patient){     
+        $orders = DB::select("SELECT * FROM orders where patient like $patient->id ");
+        
+        $doctorTemp = DB::select("SELECT * from `family_doctors` where doctorName like '$patient->familyDoctor'");
+        $doctor= [];
+        if(count($doctorTemp))$doctor =$doctorTemp[0];
+ 
+        $pharmacyTemp = DB::select("SELECT * from `pharmacies` where pharmacyName like '$patient->pharmacy'");
+        $pharmacy = [];
+        if(count($pharmacyTemp))$pharmacy =$pharmacyTemp[0];
+        $commentList = DB::select("SELECT * from `comments` where patient_id like $patient->id");
         $orderDetails = [];
-       foreach($orders as $key => $order){     
-         $orderDetail['orderId'] = $order->orderId;
-         $orderDetail['orderNote'] = $order->note; 
-         $orderDetail['date'] = $order->created_at;               
-         $patientTemp = DB::select("SELECT * from `patients` where id like '$order->patient'");
-         
-         $orderDetail['patient'] = [];
-         
-         if(count($patientTemp))$orderDetail['patient'] =$patientTemp[0];
-
-       $doctorTemp = DB::select("SELECT * from `family_doctors` where doctorName like '$order->doctor'");
-       $orderDetail['doctor'] = [];
-       if(count($doctorTemp))$orderDetail['doctor'] =$doctorTemp[0];
-
-       $pharmacyTemp = DB::select("SELECT * from `pharmacies` where pharmacyName like '$order->pharmacy'");
-       $orderDetail['pharmacy'] = [];
-       if(count($pharmacyTemp))$orderDetail['pharmacy'] =$pharmacyTemp[0];
-       
-       $userTemp = DB::select("SELECT name , id , userAvatar from `app_user` where id like '$order->user_id'");
-       $orderDetail['user'] = [];
-       if(count($userTemp))$orderDetail['user'] =$userTemp[0];
-
-       $userTemp =  DB::select("SELECT * from `instances` where id like '$order->instance_id'");
-       $orderDetail['instance'] = [];
-       if(count($userTemp)) $orderDetail['instance']=$userTemp[0];
-         $orderMedications = json_decode($order->orderMedications);
-         $orderDetail['Medications'] = DB::table('medications')->whereIn('medicationName', $orderMedications)->get();
-         $orderDetail['commentList'] = DB::select("SELECT * from `comments` where orderId like '$order->orderId'");
-         array_push($orderDetails, $orderDetail);
-       }
+        foreach($orders as $key => $order){     
+            $orderDetail['orderId'] = $order->orderId;
+            $orderDetail['id'] = $order->id;
+            $orderDetail['orderNote'] = $order->note; 
+            $orderDetail['date'] = $order->created_at;  
+            $orderDetail['done'] = $order->done;
+          $userTemp = DB::select("SELECT name , id , userAvatar from `app_user` where id like '$order->user_id'");
+          $orderDetail['user'] = [];
+          if(count($userTemp))$orderDetail['user'] =$userTemp[0];
+   
+          $userTemp =  DB::select("SELECT * from `instances` where id like '$order->instance_id'");
+          $orderDetail['instance'] = [];
+          if(count($userTemp)) $orderDetail['instance']=$userTemp[0];
+            $orderMedications = json_decode($order->orderMedications);
+            $orderDetail['Medications'] = DB::table('medications')->whereIn('medicationName', $orderMedications)->get();
+          
+            array_push($orderDetails, $orderDetail);
+          }
+        
+          $object = (object) [
+            'orderDetails' => $orderDetails,
+             'doctor' => $doctor,
+             'pharmacy' => $pharmacy,
+            'id' => $patient->id,
+            "patient" => $patient,
+            "commentList" => $commentList
+            ];
+        array_push($patientsDetail, $object);
+      }
+      return $patientsDetail;
+    
       
-        return $orderDetails;
     } 
     public function getDetail(Request $request)
     {
@@ -506,6 +518,12 @@ class OrdersController extends Controller
         
             }
         }  
+        return Comment::create($data);
+    }
+    public function addComment(Request $request)
+    {
+        $data = $request->all();
+      
         return Comment::create($data);
     }
 
